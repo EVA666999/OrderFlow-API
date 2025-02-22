@@ -25,7 +25,8 @@ jobs:
       - name: Build and Push Backend Image
         uses: docker/build-push-action@v4
         with:
-          context: ./api/api
+          context: ./api/
+          file: ./api/Dockerfile  # Указываем путь к Dockerfile явно
           push: true
           tags: ihnupfidi1/backend_api:latest
 
