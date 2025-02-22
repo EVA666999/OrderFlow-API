@@ -27,7 +27,7 @@ jobs:
         with:
           context: ./api/
           push: true
-          tags: ihnupfidi1/docker_api:latest
+          tags: ihnupfidi1/backend_api:latest
 
   build_nginx_and_push_to_docker_hub:
     name: Push nginx Docker image to DockerHub
