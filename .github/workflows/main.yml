@@ -25,7 +25,7 @@ jobs:
       - name: Build and Push Backend Image
         uses: docker/build-push-action@v4
         with:
-          context: ./api/
+          context: ./api/api
           push: true
           tags: ihnupfidi1/backend_api:latest
 
