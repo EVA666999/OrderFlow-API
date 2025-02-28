@@ -9,13 +9,16 @@ services:
     env_file: .env
     volumes:
       - pg_data1:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
 
   backend:
-    image: ihnupfidi1/backend_api
+    image: 'ihnupfidi1/backend_api'
     env_file: .env
 
   nginx:
-    image: ihnupfidi1/backend_nginx  # Используем ваш образ для Nginx
+    image: 'ihnupfidi1/backend_nginx'
     env_file: .env
     ports:
       - "9000:80"
