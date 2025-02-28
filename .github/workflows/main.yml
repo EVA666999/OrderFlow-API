@@ -50,6 +50,6 @@ jobs:
       - name: Build and Push Nginx Image
         uses: docker/build-push-action@v4
         with:
-          context: .api/nginx/
+          context: ./api/nginx/
           push: true
           tags: ihnupfidi1/backend_nginx:latest
