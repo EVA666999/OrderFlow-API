@@ -14,7 +14,7 @@ services:
 
 
   backend:
-    image: 'ihnupfidi1/backend_api'
+    build: 'ihnupfidi1/backend_api'
     env_file: .env
 
   nginx:

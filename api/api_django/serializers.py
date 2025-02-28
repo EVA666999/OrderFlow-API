@@ -27,24 +27,11 @@ class OrderProductSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), default=serializers.CurrentUserDefault())
     products = serializers.SerializerMethodField()
-    total_price = serializers.SerializerMethodField()
-
     class Meta:
         model = Order
         fields = ('user', 'total_price', 'products')
-
-    def get_total_price(self, obj):
-        order_products = OrderProduct.objects.filter(order=obj)
-        total_price = 0
-
-        for order_product in order_products:
-            product_price = order_product.product.price  
-            product_quantity = order_product.quantity 
-            total_price += product_price * product_quantity 
-        
-        return round(total_price)
 
 
     def get_products(self, obj):
