@@ -10,10 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-import datetime
+from dotenv import load_dotenv
 import os
 from datetime import timedelta, timezone
 from pathlib import Path
+
+load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
 
@@ -25,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs"
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -178,5 +180,5 @@ EMAIL_HOST = 'smtp.mail.ru'  # SMTP-сервер для Mail.ru
 EMAIL_PORT = 587  # Используем порт 587 для TLS
 EMAIL_USE_TLS = True  # Используем TLS для безопасности
 EMAIL_HOST_USER = 'ukratitelkisok9913@inbox.ru'
-EMAIL_HOST_PASSWORD = 'ubwtvq8jbcebqhCENdDM'  # Ваш пароль (или пароль приложения, если включена двухфакторная аутентификация)
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')# Ваш пароль (или пароль приложения, если включена двухфакторная аутентификация)
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
