@@ -14,11 +14,11 @@ services:
 
 
   backend:
-    build: 'ihnupfidi1/backend_api'
+    build: /api
     env_file: .env
 
   nginx:
-    image: 'ihnupfidi1/backend_nginx'
+    build: ./api/nginx
     env_file: .env
     ports:
       - "9000:80"

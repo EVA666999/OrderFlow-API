@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказы</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #orders { margin-top: 20px; }
+        .order { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Заказы</h1>
+    <div id="orders"></div>
+
+    <script>
+        const ordersContainer = document.getElementById('orders');
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/orders/');
+
+        socket.onopen = function() {
+            console.log('WebSocket подключен');
+        };
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение:', data);
+
+            if (data.order_details) {
+                const orderDetails = data.order_details;
+
+                // Создание блока для отображения информации о заказе
+                const orderDiv = document.createElement('div');
+                orderDiv.classList.add('order');
+                
+                // Формирование HTML-контента для заказа
+                orderDiv.innerHTML = `
+                    <strong>Заказ №${orderDetails.id}</strong><br>
+                    Пользователь: ${orderDetails.user}<br>
+                    Общая сумма: ${orderDetails.total_price} руб.<br>
+                    <strong>Продукты:</strong>
+                    <ul>
+                        ${orderDetails.products.map(product => `
+                            <li>${product.name} - ${product.price} руб. </li>
+                        `).join('')}
+                    </ul>
+                `;
+                // Добавление блока на страницу
+                ordersContainer.appendChild(orderDiv);
+            }
+        };
+
+        socket.onerror = function(error) {
+            console.error('WebSocket ошибка:', error);
+        };
+
+        socket.onclose = function() {
+            console.log('WebSocket закрыт');
+        };
+    </script>
+</body>
+</html>

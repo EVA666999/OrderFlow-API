@@ -1,8 +1,10 @@
 from rest_framework import routers
 
-from .views import CategoryViewSet, OrderViewSet, ProductViewSet
+from .views import CategoryViewSet, OrderViewSet, ProductViewSet, ProductReviewViewSet, DiscountViewSet
 
 api = routers.DefaultRouter()
-api.register('orders', OrderViewSet, basename='orders')
-api.register('products', ProductViewSet, basename='prioducts')
-api.register('category', CategoryViewSet, basename='categoty')
+api.register(r"orders", OrderViewSet, basename="orders")
+api.register(r"products", ProductViewSet, basename="prioducts")
+api.register(r"category", CategoryViewSet, basename="categoty")
+api.register(r"reviews", ProductReviewViewSet, basename="product_reviews")
+api.register(r"discounts", DiscountViewSet, basename="discounts")
