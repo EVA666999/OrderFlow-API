@@ -40,7 +40,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         Создаем заказ и отправляем данные через WebSocket.
         """
-
+    
         # Сохраняем заказ, передавая промокод в контекст
         order = serializer.save(user=self.request.user)
         send_order_confirmation_email(order)
@@ -161,4 +161,4 @@ class ProductReviewViewSet(viewsets.ModelViewSet):
 class DiscountViewSet(viewsets.ModelViewSet):
     queryset = Discount.objects.all()
     serializer_class = DiscountSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdminOrEmployee]

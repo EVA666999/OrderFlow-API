@@ -20,3 +20,6 @@ langchain
 autopep8
 black
 Pillow
+drf-yasg
+django-cors-headers
+pytest

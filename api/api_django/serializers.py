@@ -3,7 +3,7 @@ from django.forms import ValidationError
 from rest_framework import serializers
 from decimal import Decimal
 
-from .models import Category, Order, OrderProduct, Product, ProductReview, Discount
+from .models import Category, Order, OrderProduct, Product, ProductReview, Discount, PurchaseHistory
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -29,7 +29,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
-    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    product = serializers.SlugRelatedField(
+        queryset=Product.objects.all(), slug_field="name"
+    )
     quantity = serializers.IntegerField(default=1)
 
     class Meta:
@@ -48,7 +50,9 @@ class OrderSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     products = OrderProductSerializer(many=True, write_only=True)  # Для записи
     products_data = serializers.SerializerMethodField()  # Для чтения
-    discount = serializers.CharField(required=False)  # Поле для промокода
+    discount = serializers.SlugRelatedField(
+        queryset=Discount.objects.all(), slug_field="code", required=False
+    )
     discount_amount = serializers.SerializerMethodField()  # Для скидки
 
     class Meta:
@@ -91,6 +95,8 @@ class OrderSerializer(serializers.ModelSerializer):
             # Проверка на наличие товара
             if product.stock < quantity:
                 raise serializers.ValidationError(f"Недостаточно {product.name} на складе!")
+            # elif discount_code != product.discount:
+            #     raise serializers.ValidationError(f"Промокод не совпадает с ценой товара {product.name}!")
 
             # Уменьшаем stock
             product.stock -= quantity
@@ -100,6 +106,14 @@ class OrderSerializer(serializers.ModelSerializer):
             OrderProduct.objects.create(order=order, product=product, quantity=quantity)
 
             total_price += Decimal(product.price) * Decimal(quantity)
+
+            PurchaseHistory.objects.create(
+                user=order.user,
+                order=order,
+                product=product,
+                price=product.price,
+                quantity=quantity
+            )
 
         # Если промокод передан, проверим его
         discount_percentage = 0
@@ -126,7 +140,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class ProductReviewSerializer(serializers.ModelSerializer):
-    product = serializers.CharField()
+    product = serializers.SlugRelatedField(
+        queryset=Product.objects.all(), slug_field="name"
+    )
     customer = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Category, Order, OrderProduct, Product, User, ProductReview, Discount
+from .models import Category, Order, OrderProduct, Product, PurchaseHistory, User, ProductReview, Discount
 
 
 class CustomUserAdmin(UserAdmin):
@@ -60,3 +60,9 @@ class ProductReviewAdmin(admin.ModelAdmin):
 class DiscountAdmin(admin.ModelAdmin):
     list_display = ['code', 'discount_percentage', 'valid_from', 'valid_to', 'is_active']
     search_fields = ['code']
+
+@admin.register(PurchaseHistory)
+class PurchaseHistoryAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'order', 'product', 'price', 'quantity', 'purchase_date')
+    list_filter = ('user', 'purchase_date')
+    search_fields = ('user__username', 'product__name')

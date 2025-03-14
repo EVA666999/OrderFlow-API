@@ -53,7 +53,7 @@ class Order(models.Model):
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_orders")
     quantity = models.PositiveIntegerField(default=1)
 
     def __str__(self):
@@ -152,3 +152,10 @@ class Discount(models.Model):
             return self.discount_percentage
         return None
     
+class PurchaseHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchase_history")
+    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, related_name='order_items', on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    quantity = models.PositiveIntegerField(default=1)
+    purchase_date = models.DateTimeField(auto_now_add=True)

@@ -210,7 +210,7 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
                 )
             elif employee:
                 data.update(
-                    {
+                    {   
                         "first_name": employee.first_name,
                         "last_name": employee.last_name,
                         "phone": employee.phone,

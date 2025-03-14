@@ -18,6 +18,7 @@ from pathlib import Path
 load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
+CORS_ORIGIN_ALLOW_ALL = True  # Разрешить доступ с любых источников
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,6 +52,8 @@ INSTALLED_APPS = [
     "users",
     "channels",
     "aichat",
+    'drf_yasg',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -65,11 +68,12 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = "api.urls"
 
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],  # Путь к шаблонам
-        "APP_DIRS": True,  # Включаем поиск шаблонов в директориях приложений
+        "DIRS": [TEMPLATES_DIR],
+        "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -80,8 +84,6 @@ TEMPLATES = [
         },
     },
 ]
-
-
 WSGI_APPLICATION = "api.wsgi.application"
 ASGI_APPLICATION = "api.asgi.application"  # Замените на название вашего проекта
 
@@ -90,7 +92,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",  # Используем InMemory вместо Redis
     },
 }
-
+# user@example.com string1234
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -150,6 +152,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
+        'rest_framework.permissions.AllowAny',
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -182,3 +185,20 @@ EMAIL_USE_TLS = True  # Используем TLS для безопасности
 EMAIL_HOST_USER = 'ukratitelkisok9913@inbox.ru'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')# Ваш пароль (или пароль приложения, если включена двухфакторная аутентификация)
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+
+STATIC_URL = '/static/'
+
+# Для сборки статических файлов
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization',
+            'description': "JWT Authorization header using the Bearer scheme. Example: 'Bearer <your_token>'"
+        }
+    },
+}
