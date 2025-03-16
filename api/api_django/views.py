@@ -14,7 +14,8 @@ from .permissions import (
     IsAdminOrEmployee,
     IsAdminOrSupplier,
     IsCustomer,
-    IsAdmin
+    IsAdmin,
+    IsAuthor
 )
 from .serializers import (
     CategorySerializer,
@@ -43,7 +44,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     
         # Сохраняем заказ, передавая промокод в контекст
         order = serializer.save(user=self.request.user)
-        send_order_confirmation_email(order)
+        # send_order_confirmation_email(order)
 
         # Получаем канал
         channel_layer = get_channel_layer()
@@ -72,6 +73,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             },
         )
 
+    def get_queryset(self):
+        """
+        Получаем заказы текущего пользователя.
+        """
+        return self.queryset.filter(user=self.request.user)
+
     def get_permissions(self):
         """
         Устанавливаем разрешения для разных действий.
@@ -96,6 +103,27 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "category__name"]  # Указываем поля для поиска
     ordering_fields = ["price", "pub_date"]  # Поля для сортировки
     ordering = ["price"]  # По умолчанию сортируем по цене
+    
+    def perform_create(self, serializer):
+        product = serializer.save()
+
+        channel_layer = get_channel_layer()
+
+        product_details = {
+            "product_id": product.id,
+            "category": product.category.name,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock,
+        }
+
+        async_to_sync(channel_layer.group_send)(  # Отправка через WebSocket
+            "product_group",  # Название группы
+            {
+                "type": "send_product_details",
+                "product_details": product_details,
+            },
+        )
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -106,7 +134,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return [IsAdminOrSupplier()]  # Только поставщик может создавать продукт
         elif self.action in ["update", "partial_update", "destroy"]:
             return [
-                IsAdminOrEmployee()
+                IsAdminOrSupplier()
             ]  # Только админ или сотрудник могут редактировать продукт
         return super().get_permissions()
 
@@ -114,6 +142,23 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
+
+    def perform_create(self, serializerr):
+        # Для создания категории - доступ только у админа
+        category = serializerr.save()
+        channel_layer = get_channel_layer()
+        category_details = {
+            "category_id": category.id,
+            "name": category.name
+        }
+
+        async_to_sync(channel_layer.group_send)(  # Отправка через WebSocket
+            "category_group",  # Название группы
+            {
+                "type": "send_category_details",  # Тип события для consumer
+                "category_details": category_details,
+            },
+        )
 
     def get_permissions(self):
         """
@@ -132,31 +177,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
 
-def create_order(order_details):
-    # Логирование для проверки данных
-    print(f"Создание заказа: {order_details}")
-
-    # Получаем слой каналов и отправляем сообщение в группу
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "orders_group",  # Название группы
-        {
-            "type": "send_order_details",
-            "order_details": order_details,  # Данные о заказе
-        },
-    )
-
-
 class ProductReviewViewSet(viewsets.ModelViewSet):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
     permission_classes = [IsCustomer]
 
     def perform_create(self, serializer):
-        user = self.request.user
-        customer = user.customer
-        serializer.save(customer=customer)
-
+        serializer.save()
+    
+    def get_queryset(self):
+        return self.queryset.filter(customer=self.request.user)
 
 class DiscountViewSet(viewsets.ModelViewSet):
     queryset = Discount.objects.all()

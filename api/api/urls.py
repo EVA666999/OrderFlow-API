@@ -45,7 +45,7 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='swagger-ui'),
     path(
         "ws_orders/", TemplateView.as_view(template_name="orders.html"), name="orders"
-    ),
+    )
 ]
 
 

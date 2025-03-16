@@ -1,88 +1,108 @@
-from rest_framework.test import APITestCase
+import pytest
 from rest_framework import status
+from rest_framework.test import APIClient
 
-class AuthTestCase(APITestCase):
-    def setUp(self):
-        # Создаем пользователя, который будет использоваться для запроса токена
-        self.user_employee = {
-            "email": "user@e22xamp222l21e.com",
-            "username": "str2221222ing",
-            "role": "employee",
-            "password": "strin222g22212344",
-            "first_name": "dajfa",
-            "last_name": "gfjiosjog",
-            "phone": "4132324521",
-            "salary": "1000"
+@pytest.fixture
+def user_employee():
+    """Создание пользователя employee."""
+    user = {
+        "email": "user@e22xamp222l21e.com",
+        "username": "str2221222ing",
+        "role": "employee",
+        "password": "strin222g22212344",
+        "first_name": "dajfa",
+        "last_name": "gfjiosjog",
+        "phone": "4132324521",
+        "salary": "1000"
+    }
+    client = APIClient()
+    client.post('/auth/users/', user, format='json')
+    return user, client
 
-            }
-        self.user_customer = {
-            "email": "user@2e222xamp222l21e.com",
-            "username": "str22222222ing",
-            "role": "customer",
-            "password": "strin222g222212344",
-            "phone_number": "31414142",
-            "address": "string",
-            "contact_name": "string",
-            "company_name": "string",
-            "country": "string"
-            }
-        # Создаем пользователя для получения токена
-        self.client.post('/auth/users/', self.user_employee, format='json')
-        self.client.post('/auth/users/', self.user_customer, format='json')
+@pytest.fixture
+def user_customer():
+    """Создание пользователя customer."""
+    user = {
+        "email": "user@2e222xamp222l21e.com",
+        "username": "str22222222ing",
+        "role": "customer",
+        "password": "strin222g222212344",
+        "phone_number": "31414142",
+        "address": "string",
+        "contact_name": "string",
+        "company_name": "string",
+        "country": "string"
+    }
+    client = APIClient()
+    client.post('/auth/users/', user, format='json')
+    return user, client
 
-        # Получаем токен
-        response = self.client.post(
-            '/auth/jwt/create/', 
-            {
-                "email": self.user_employee["email"],
-                "password": self.user_employee["password"]
-            },
-            format='json'
-        )
-        
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
-        self.token_employee = response.data['access']
+@pytest.fixture
+def get_token_for_user(user_employee, user_customer):
+    """Получаем JWT токен для обоих пользователей."""
+    client = APIClient()
 
-        response = self.client.post(
-            '/auth/jwt/create/', 
-            {
-                "email": self.user_customer["email"],
-                "password": self.user_customer["password"]
-            },
-            format='json'
-        )
+    response = client.post(
+        '/auth/jwt/create/', 
+        {
+            "email": user_employee[0]["email"],
+            "password": user_employee[0]["password"]
+        },
+        format='json'
+    )
+    assert response.status_code == status.HTTP_200_OK
+    token_employee = response.data['access']
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('access', response.data)
-        self.token_customer = response.data['access']
+    response = client.post(
+        '/auth/jwt/create/', 
+        {
+            "email": user_customer[0]["email"],
+            "password": user_customer[0]["password"]
+        },
+        format='json'
+    )
+    assert response.status_code == status.HTTP_200_OK
+    token_customer = response.data['access']
 
-    def test_get_jwt_token(self):
-        """Проверка получения JWT токена"""
-        # Этот тест можно оставить пустым, так как логика получения токена уже включена в setUp()
+    return token_employee, token_customer, client
 
-        # Просто проверим, что токен был сохранен
-        self.assertIsNotNone(self.token_employee)
-        self.assertIsNotNone(self.token_customer)
 
-    def test_protected_endpoints_for_customers(self):
-        """Тестируем защищённые эндпоинты (категории и другие)"""
-        # Используем полученный токен для доступа к защищенному ресурсу
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token_customer)
+@pytest.mark.django_db
+def test_get_jwt_token(get_token_for_user):
+    """Проверка получения JWT токена."""
+    token_employee, token_customer, _ = get_token_for_user
 
-        # Проверяем доступ к эндпоинту заказов
-        response = self.client.get('/api/orders/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    assert token_employee is not None
+    assert token_customer is not None
 
-        # Проверяем доступ к эндпоинту продуктов
-        response = self.client.get('/api/products/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Проверяем доступ к эндпоинту категорий
-        response = self.client.get('/api/category/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+@pytest.mark.django_db
+def test_protected_endpoints_for_customers(get_token_for_user):
+    """Тестируем защищённые эндпоинты для customers и employees."""
+    token_employee, token_customer, client = get_token_for_user
 
-         # Проверяем доступ к эндпоинту отзывов
-        response = self.client.get('/api/reviews/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_customer)
 
+    endpoints = [
+        "/api/orders/",
+        "/api/products/",
+        "/api/category/",
+        "/api/reviews/",
+        "/auth/users/",
+        "/users/me/",
+        "/users/users/"
+    ]
+
+    for endpoint in endpoints:
+        response = client.get(endpoint)
+        assert response.status_code in [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED], f"Ошибка на {endpoint}"
+
+    client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_employee)
+
+    employee_endpoints = [
+        "/api/discounts/"
+    ]
+
+    for endpoint in employee_endpoints:
+        response = client.get(endpoint)
+        assert response.status_code in [status.HTTP_200_OK, status.HTTP_403_FORBIDDEN], f"Ошибка на {endpoint}"

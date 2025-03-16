@@ -16,7 +16,7 @@ class Category(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=128)
+    name = models.CharField(max_length=128, unique=True)
     video = models.FileField(upload_to="videos/", null=True, blank=True)
     image = models.ImageField(upload_to='products_images/', null=True, blank=True)
     description = models.TextField(blank=True, null=True)
@@ -84,7 +84,7 @@ class ProductReview(models.Model):
         Product, on_delete=models.CASCADE, related_name="reviews"
     )  # Привязываем к продукту
     customer = models.ForeignKey(
-        Customer, on_delete=models.CASCADE, related_name="product_reviews"
+        User, on_delete=models.CASCADE, related_name="product_reviews"
     )  # Связь с клиентом
     rating = models.PositiveIntegerField(
         choices=[(i, str(i)) for i in range(1, 6)]
@@ -96,7 +96,7 @@ class ProductReview(models.Model):
     image = models.ImageField(upload_to='review_images/', null=True, blank=True)
 
     def __str__(self):
-        return f"Отзыв на {self.product.name} от {self.customer.user.username}"
+        return f"Отзыв на {self.product.name} от {self.customer.username}"
 
 #     def analyze_sentiment(self):
 #         """
@@ -151,8 +151,10 @@ class Discount(models.Model):
         if self.is_active and self.valid_from <= now <= self.valid_to:
             return self.discount_percentage
         return None
-    
+
+
 class PurchaseHistory(models.Model):
+    """История всех заказов для администратора"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="purchase_history")
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, related_name='order_items', on_delete=models.CASCADE)

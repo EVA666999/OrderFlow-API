@@ -2,6 +2,16 @@ from rest_framework import permissions
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 
+class IsAuthor(permissions.BasePermission):
+    """
+    Разрешение, которое дает доступ только автору объекта.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Разрешаем доступ только если пользователь является автором объекта
+        return obj.user == request.user  # Проверка, что объект принадлежит текущему пользователю
+
+
 class IsAdminOrReadOnlyPermission(permissions.BasePermission):
     """
     Разрешение, которое позволяет только администраторам изменять данные,

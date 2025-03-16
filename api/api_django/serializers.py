@@ -2,8 +2,10 @@ from django.contrib.auth import get_user_model
 from django.forms import ValidationError
 from rest_framework import serializers
 from decimal import Decimal
-
 from .models import Category, Order, OrderProduct, Product, ProductReview, Discount, PurchaseHistory
+
+from users.models import Customer
+
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -14,7 +16,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     # comment = serializers.SerializerMethodField()
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    category = serializers.SlugRelatedField(queryset=Category.objects.all(), slug_field="name")
 
     class Meta:
         model = Product
@@ -37,13 +39,14 @@ class OrderProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderProduct
         fields = ("product", "quantity")
+        
 
 class DiscountSerializer(serializers.ModelSerializer):
     valid_from = serializers.DateField(input_formats=['%Y.%m.%d'])
     valid_to = serializers.DateField(input_formats=['%Y.%m.%d'])
     class Meta:
         model = Discount
-        fields = ['code', 'discount_percentage', 'valid_from', 'valid_to', 'is_active']
+        fields = ['id', 'code', 'discount_percentage', 'valid_from', 'valid_to', 'is_active']
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -82,53 +85,82 @@ class OrderSerializer(serializers.ModelSerializer):
         return "Промокод не передан или не найден."  # Если промокод не передан
 
     def create(self, validated_data):
-        products_data = validated_data.pop("products", [])  # Извлекаем продукты
-        discount_code = validated_data.pop("discount", None)  # Получаем промокод
-        order = Order.objects.create(user=validated_data["user"])
+        products_data = validated_data.pop("products", [])  
+        discount_obj = validated_data.pop("discount", None)  # Теперь это объект Discount
 
+        order = Order.objects.create(user=validated_data["user"])
         total_price = Decimal(0)
 
         for product_data in products_data:
             product = product_data["product"]
             quantity = product_data["quantity"]
 
-            # Проверка на наличие товара
             if product.stock < quantity:
                 raise serializers.ValidationError(f"Недостаточно {product.name} на складе!")
-            # elif discount_code != product.discount:
-            #     raise serializers.ValidationError(f"Промокод не совпадает с ценой товара {product.name}!")
 
-            # Уменьшаем stock
             product.stock -= quantity
             product.save()
 
-            # Создаём связь с заказом
             OrderProduct.objects.create(order=order, product=product, quantity=quantity)
-
             total_price += Decimal(product.price) * Decimal(quantity)
 
-            PurchaseHistory.objects.create(
-                user=order.user,
-                order=order,
-                product=product,
-                price=product.price,
-                quantity=quantity
-            )
-
-        # Если промокод передан, проверим его
-        discount_percentage = 0
-        if discount_code:
-            discount_obj = Discount.objects.filter(code=discount_code, is_active=True).first()
-            if discount_obj:
-                discount_percentage = discount_obj.discount_percentage
+        # Проверяем скидку
+        if discount_obj:
+            discount_percentage = discount_obj.discount_percentage
+        else:
+            discount_percentage = 0
 
         discount_amount = (total_price * Decimal(discount_percentage)) / Decimal(100)
         total_price -= discount_amount
 
         order.total_price = total_price
+        order.discount = discount_obj  # Применяем скидку к заказу
         order.save()
 
         return order
+    
+    def update(self, instance, validated_data):
+        # Извлекаем данные продуктов, если они есть
+        products_data = validated_data.pop("products", [])
+        discount_obj = validated_data.pop("discount", None)
+
+        # Получаем заказ по ID
+        order = instance
+
+        total_price = Decimal('0.00')  # Начинаем с нулевой суммы
+
+        for product in products_data:
+            product_instance = product.get('product')
+            quantity = product.get('quantity')
+
+            if quantity > product_instance.stock:
+                raise serializers.ValidationError(f"Недостаточно {product_instance.name} на складе!")
+
+            # Обновляем количество товара на складе
+            product_instance.stock -= quantity
+            product_instance.save()
+
+            # Обновляем или создаем связь товара с заказом
+            OrderProduct.objects.update_or_create(order=order, product=product_instance, defaults={"quantity": quantity})
+            total_price += Decimal(product_instance.price) * Decimal(quantity)
+
+        # Обновляем итоговую цену заказа
+        if discount_obj:
+            discount_percentage = discount_obj.discount_percentage
+        else:
+            discount_percentage = 0
+
+        discount_amount = (total_price * Decimal(discount_percentage)) / Decimal(100)
+        total_price -= discount_amount
+
+        order.total_price = total_price
+        order.discount = discount_obj  # Применяем скидку к заказу
+        order.save()
+
+        return order
+        
+        
+
 
     def to_representation(self, instance):
         """
@@ -168,4 +200,5 @@ class ProductReviewSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data["product_id"] = instance.product.id  # Выводим имя пользователя вместо ID
+        data["customer"] = instance.customer.username
         return data
