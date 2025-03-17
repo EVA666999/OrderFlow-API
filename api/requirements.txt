@@ -25,6 +25,8 @@ pytest-django
 psycopg2-binary
 python-dotenv
 django-extensions
+pycodestyle==2.10.0
+
 
 # Совместимые версии httpx и зависимостей
 httpx>=0.27.2,<1.0.0

@@ -4,18 +4,11 @@ from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Category, Discount, Order, Product, ProductReview
-from .permissions import (
-    IsAdminOrCustomer,
-    IsAdminOrEmployee,
-    IsAdminOrSupplier,
-)
-from .serializers import (
-    CategorySerializer,
-    DiscountSerializer,
-    OrderSerializer,
-    ProductReviewSerializer,
-    ProductSerializer,
-)
+from .permissions import (IsAdminOrCustomer, IsAdminOrEmployee,
+                          IsAdminOrSupplier)
+from .serializers import (CategorySerializer, DiscountSerializer,
+                          OrderSerializer, ProductReviewSerializer,
+                          ProductSerializer)
 
 
 class OrderViewSet(viewsets.ModelViewSet):

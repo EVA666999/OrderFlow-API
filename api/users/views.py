@@ -5,11 +5,8 @@ from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from .models import User
-from .serializers import (
-    CustomUserCreateSerializer,
-    CustomUserUpdateSerializer,
-    Usersermeializer,
-)
+from .serializers import (CustomUserCreateSerializer,
+                          CustomUserUpdateSerializer, Usersermeializer)
 
 
 class UsersViewSet(viewsets.ReadOnlyModelViewSet):
