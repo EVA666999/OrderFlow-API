@@ -59,23 +59,25 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.9
 
-    # Чтобы запустить тесты, нужно установить зависимости
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip 
         pip install flake8==6.0.0 flake8-isort==6.0.0 pycodestyle==2.10.0
-        pip install -r ./api/requirements.txt 
-    # Этот шаг дополним:
+        pip install -r ./api/requirements.txt
+
     - name: Test with flake8 and django tests
-      # Команд стало больше одной; ставим символ | и пишем команды построчно
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}  # Здесь мы добавляем переменную в секцию env
       run: |
         python -m flake8 api/
         cd api/
         pytest tests/test_views.py
         pytest tests/test_urls.py
         pytest tests/test_aichat.py
+
