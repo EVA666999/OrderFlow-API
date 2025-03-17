@@ -1,7 +1,35 @@
-version: '3'
+# version: '3'
+
+# volumes:
+#   pg_data1:
+
+# services:
+#   db1:
+#     image: postgres:13
+#     env_file: .env
+#     volumes:
+#       - pg_data1:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+
+
+#   backend:
+#     build: /api
+#     env_file: .env
+
+#   nginx:
+#     build: ./api/nginx
+#     env_file: .env
+#     ports:
+#       - "9000:80"
+
+
+
+version: '3.8'
 
 volumes:
   pg_data1:
+  static_data:
 
 services:
   db1:
@@ -9,17 +37,20 @@ services:
     env_file: .env
     volumes:
       - pg_data1:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
 
   backend:
-    build: /api
+    image: ihnupfidi1/backend
     env_file: .env
+    volumes:
+      - static_data:/staticfiles
+
 
   nginx:
-    build: ./api/nginx
+    image: ihnupfidi1/nginx
     env_file: .env
+    volumes:
+      - static_data:/staticfiles
     ports:
       - "9000:80"
+
 

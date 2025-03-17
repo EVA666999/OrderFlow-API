@@ -1,35 +1,21 @@
-import os
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from dotenv import load_dotenv
 from rest_framework import filters, viewsets
-from .send_email import send_order_confirmation_email  
-
 from rest_framework.permissions import IsAuthenticated
 
-
-from .models import Category, Order, Product, ProductReview, Discount
+from .models import Category, Discount, Order, Product, ProductReview
 from .permissions import (
     IsAdminOrCustomer,
     IsAdminOrEmployee,
     IsAdminOrSupplier,
-    IsCustomer,
-    IsAdmin,
-    IsAuthor
 )
 from .serializers import (
     CategorySerializer,
+    DiscountSerializer,
     OrderSerializer,
-    ProductSerializer,
     ProductReviewSerializer,
-    DiscountSerializer
+    ProductSerializer,
 )
-
-# Загрузка переменных окружения из файла .env
-load_dotenv()
-
-# Проверка, загрузился ли ключ
-MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY")
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -41,7 +27,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         """
         Создаем заказ и отправляем данные через WebSocket.
         """
-    
+
         # Сохраняем заказ, передавая промокод в контекст
         order = serializer.save(user=self.request.user)
         # send_order_confirmation_email(order)
@@ -86,14 +72,17 @@ class OrderViewSet(viewsets.ModelViewSet):
         if self.action == "create":
             return [IsAdminOrCustomer()]
         return super().get_permissions()
-    
+
     def get_serializer_context(self):
         """
         Добавляем промокод в контекст для сериализатора.
         """
         context = super().get_serializer_context()
-        context['discount'] = self.request.data.get('discount', None)  # Добавляем промокод в контекст
+        context["discount"] = self.request.data.get(
+            "discount", None
+        )  # Добавляем промокод в контекст
         return context
+
 
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
@@ -103,7 +92,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "category__name"]  # Указываем поля для поиска
     ordering_fields = ["price", "pub_date"]  # Поля для сортировки
     ordering = ["price"]  # По умолчанию сортируем по цене
-    
+
     def perform_create(self, serializer):
         product = serializer.save()
 
@@ -147,10 +136,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         # Для создания категории - доступ только у админа
         category = serializerr.save()
         channel_layer = get_channel_layer()
-        category_details = {
-            "category_id": category.id,
-            "name": category.name
-        }
+        category_details = {"category_id": category.id, "name": category.name}
 
         async_to_sync(channel_layer.group_send)(  # Отправка через WebSocket
             "category_group",  # Название группы
@@ -180,13 +166,30 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class ProductReviewViewSet(viewsets.ModelViewSet):
     queryset = ProductReview.objects.all()
     serializer_class = ProductReviewSerializer
-    permission_classes = [IsCustomer]
+    permission_classes = [IsAdminOrCustomer]
 
     def perform_create(self, serializer):
-        serializer.save()
-    
+        review = serializer.save()
+        channel_layer = get_channel_layer()
+
+        review_details = {
+            "review_id": review.id,
+            "comment": review.comment,
+            "rating": review.rating,
+            "product": review.product.name,
+        }
+
+        async_to_sync(channel_layer.group_send)(
+            "review_group",
+            {
+                "type": "send_review_details",
+                "review_details": review_details,
+            },
+        )
+
     def get_queryset(self):
         return self.queryset.filter(customer=self.request.user)
+
 
 class DiscountViewSet(viewsets.ModelViewSet):
     queryset = Discount.objects.all()

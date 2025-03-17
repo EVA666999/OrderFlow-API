@@ -92,11 +92,27 @@ def execute_sql_query(query):
 
 
 SCHEMA_DESCRIPTION = (
-    "Table api_django_product: id (INTEGER), name (TEXT), description (TEXT), price (DECIMAL), stock (INTEGER)\n"
-    "Table api_django_order: id (INTEGER), user_id (INTEGER), total_price (DECIMAL), pub_date (DATE)\n"
-    "Table api_django_order_products: id (INTEGER), order_id (INTEGER), product_id (INTEGER), quantity (INTEGER)\n"
-    "Table users_customer: id (INTEGER), user_id (INTEGER), address (TEXT)\n"
-    "Table users_user: id (INTEGER), username (TEXT), email (TEXT), role (TEXT)"
+    "Table api_django_category: id (bigint), name (character varying)\n"
+    "Table api_django_discount: id (bigint), code (character varying), discount_percentage (integer), valid_from (date), valid_to (date), is_active (boolean)\n"
+    "Table api_django_order: id (bigint), pub_date (date), total_price (numeric), user_id (bigint), discount_id (bigint)\n"
+    "Table api_django_order_products: id (bigint), order_id (bigint), product_id (bigint)\n"
+    "Table api_django_orderproduct: id (bigint), quantity (integer), order_id (bigint), product_id (bigint)\n"
+    "Table api_django_product: id (bigint), name (character varying), description (text), price (numeric), pub_date (date), stock (integer), category_id (bigint), video (character varying), image (character varying)\n"
+    "Table api_django_productreview: id (bigint), rating (integer), comment (text), sentiment (character varying), created_at (timestamp with time zone), video (character varying), customer_id (bigint), product_id (bigint), image (character varying)\n"
+    "Table api_django_purchasehistory: id (bigint), purchase_date (timestamp with time zone), product_id (bigint), user_id (bigint), order_id (bigint), price (numeric), quantity (integer)\n"
+    "Table auth_group: id (integer), name (character varying)\n"
+    "Table auth_group_permissions: id (bigint), group_id (integer), permission_id (integer)\n"
+    "Table auth_permission: id (integer), name (character varying), content_type_id (integer), codename (character varying)\n"
+    "Table django_admin_log: id (integer), action_time (timestamp with time zone), object_id (text), object_repr (character varying), action_flag (smallint), change_message (text), content_type_id (integer), user_id (bigint)\n"
+    "Table django_content_type: id (integer), app_label (character varying), model (character varying)\n"
+    "Table django_migrations: id (bigint), app (character varying), name (character varying), applied (timestamp with time zone)\n"
+    "Table django_session: session_key (character varying), session_data (text), expire_date (timestamp with time zone)\n"
+    "Table users_customer: id (bigint), phone_number (character varying), address (character varying), contact_name (character varying), company_name (character varying), country (character varying), user_id (bigint)\n"
+    "Table users_employee: id (bigint), first_name (character varying), last_name (character varying), phone (character varying), salary (numeric), user_id (bigint)\n"
+    "Table users_supplier: id (bigint), name (character varying), contact_name (character varying), contact_phone (character varying), address (text), created_at (timestamp with time zone), user_id (bigint)\n"
+    "Table users_user: id (bigint), password (character varying), last_login (timestamp with time zone), is_superuser (boolean), is_staff (boolean), is_active (boolean), date_joined (timestamp with time zone), username (character varying), email (character varying), first_name (character varying), last_name (character varying), role (character varying)\n"
+    "Table users_user_groups: id (bigint), user_id (bigint), group_id (integer)\n"
+    "Table users_user_user_permissions: id (bigint), user_id (bigint), permission_id (integer)\n"
 )
 
 
@@ -132,6 +148,3 @@ def chat_with_ai(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Invalid request"}, status=400)
-
-
-

@@ -9,7 +9,9 @@ class IsAuthor(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Разрешаем доступ только если пользователь является автором объекта
-        return obj.user == request.user  # Проверка, что объект принадлежит текущему пользователю
+        return (
+            obj.user == request.user
+        )  # Проверка, что объект принадлежит текущему пользователю
 
 
 class IsAdminOrReadOnlyPermission(permissions.BasePermission):

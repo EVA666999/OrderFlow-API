@@ -2,6 +2,7 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
+
 @pytest.fixture
 def user_employee():
     """Создание пользователя employee."""
@@ -13,11 +14,12 @@ def user_employee():
         "first_name": "dajfa",
         "last_name": "gfjiosjog",
         "phone": "4132324521",
-        "salary": "1000"
+        "salary": "1000",
     }
     client = APIClient()
-    client.post('/auth/users/', user, format='json')
+    client.post("/auth/users/", user, format="json")
     return user, client
+
 
 @pytest.fixture
 def user_customer():
@@ -31,11 +33,12 @@ def user_customer():
         "address": "string",
         "contact_name": "string",
         "company_name": "string",
-        "country": "string"
+        "country": "string",
     }
     client = APIClient()
-    client.post('/auth/users/', user, format='json')
+    client.post("/auth/users/", user, format="json")
     return user, client
+
 
 @pytest.fixture
 def get_token_for_user(user_employee, user_customer):
@@ -43,26 +46,20 @@ def get_token_for_user(user_employee, user_customer):
     client = APIClient()
 
     response = client.post(
-        '/auth/jwt/create/', 
-        {
-            "email": user_employee[0]["email"],
-            "password": user_employee[0]["password"]
-        },
-        format='json'
+        "/auth/jwt/create/",
+        {"email": user_employee[0]["email"], "password": user_employee[0]["password"]},
+        format="json",
     )
     assert response.status_code == status.HTTP_200_OK
-    token_employee = response.data['access']
+    token_employee = response.data["access"]
 
     response = client.post(
-        '/auth/jwt/create/', 
-        {
-            "email": user_customer[0]["email"],
-            "password": user_customer[0]["password"]
-        },
-        format='json'
+        "/auth/jwt/create/",
+        {"email": user_customer[0]["email"], "password": user_customer[0]["password"]},
+        format="json",
     )
     assert response.status_code == status.HTTP_200_OK
-    token_customer = response.data['access']
+    token_customer = response.data["access"]
 
     return token_employee, token_customer, client
 
@@ -81,7 +78,7 @@ def test_protected_endpoints_for_customers(get_token_for_user):
     """Тестируем защищённые эндпоинты для customers и employees."""
     token_employee, token_customer, client = get_token_for_user
 
-    client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_customer)
+    client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
     endpoints = [
         "/api/orders/",
@@ -90,19 +87,23 @@ def test_protected_endpoints_for_customers(get_token_for_user):
         "/api/reviews/",
         "/auth/users/",
         "/users/me/",
-        "/users/users/"
+        "/users/users/",
     ]
 
     for endpoint in endpoints:
         response = client.get(endpoint)
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_401_UNAUTHORIZED], f"Ошибка на {endpoint}"
+        assert response.status_code in [
+            status.HTTP_200_OK,
+            status.HTTP_401_UNAUTHORIZED,
+        ], f"Ошибка на {endpoint}"
 
-    client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_employee)
+    client.credentials(HTTP_AUTHORIZATION="Bearer " + token_employee)
 
-    employee_endpoints = [
-        "/api/discounts/"
-    ]
+    employee_endpoints = ["/api/discounts/"]
 
     for endpoint in employee_endpoints:
         response = client.get(endpoint)
-        assert response.status_code in [status.HTTP_200_OK, status.HTTP_403_FORBIDDEN], f"Ошибка на {endpoint}"
+        assert response.status_code in [
+            status.HTTP_200_OK,
+            status.HTTP_403_FORBIDDEN,
+        ], f"Ошибка на {endpoint}"

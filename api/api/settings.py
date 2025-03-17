@@ -10,10 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
-from dotenv import load_dotenv
 import os
 from datetime import timedelta, timezone
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 load_dotenv()  # Загружаем переменные окружения
 
@@ -28,12 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -52,8 +53,8 @@ INSTALLED_APPS = [
     "users",
     "channels",
     "aichat",
-    'drf_yasg',
-    'corsheaders',
+    "drf_yasg",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -97,10 +98,27 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'db_for_api_django',
+#         'USER': 'postgres',
+#         'PASSWORD': 'Kohkau11999',
+#         'HOST': 'localhost',  # Или IP, если база на удалённом сервере
+#         'PORT': '5432',  # Стандартный порт PostgreSQL
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",  # для SQLite
-        "NAME": BASE_DIR / "db.sqlite3",
+        # Меняем настройку Django: теперь для работы будет использоваться
+        # бэкенд postgresql
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", "django"),
+        "USER": os.getenv("POSTGRES_USER", "django"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+        "HOST": os.getenv("DB_HOST", ""),
+        "PORT": os.getenv("DB_PORT", 5432),
     }
 }
 
@@ -141,7 +159,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
+
 STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "collected_static"
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
@@ -152,7 +173,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
-        'rest_framework.permissions.AllowAny',
+        "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -178,27 +199,29 @@ DJOSER = {
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.mail.ru'  # SMTP-сервер для Mail.ru
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.mail.ru"  # SMTP-сервер для Mail.ru
 EMAIL_PORT = 587  # Используем порт 587 для TLS
 EMAIL_USE_TLS = True  # Используем TLS для безопасности
-EMAIL_HOST_USER = 'ukratitelkisok9913@inbox.ru'
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')# Ваш пароль (или пароль приложения, если включена двухфакторная аутентификация)
+EMAIL_HOST_USER = "ukratitelkisok9913@inbox.ru"
+EMAIL_HOST_PASSWORD = os.getenv(
+    "EMAIL_HOST_PASSWORD"
+)  # Ваш пароль (или пароль приложения, если включена двухфакторная аутентификация)
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 # Для сборки статических файлов
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 SWAGGER_SETTINGS = {
-    'SECURITY_DEFINITIONS': {
-        'Bearer': {
-            'type': 'apiKey',
-            'in': 'header',
-            'name': 'Authorization',
-            'description': "JWT Authorization header using the Bearer scheme. Example: 'Bearer <your_token>'"
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "Authorization",
+            "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer <your_token>'",
         }
     },
 }

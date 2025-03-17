@@ -7,15 +7,13 @@ channels
 daphne
 uvicorn
 channels_redis
-textblob
-textblob.download_corpora
-googletrans==4.0.0-rc1
+textblob==0.15.3
+googletrans==4.0.2
 transformers
-torch
-tensorflow
+# torch
+# tensorflow
 tf-keras
 openai
-googletrans
 langchain
 autopep8
 black
@@ -24,3 +22,9 @@ drf-yasg
 django-cors-headers
 pytest
 pytest-django
+psycopg2-binary
+python-dotenv
+django-extensions
+
+# Совместимые версии httpx и зависимостей
+httpx>=0.27.2,<1.0.0

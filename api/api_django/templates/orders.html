@@ -6,8 +6,8 @@
     <title>Заказы и Категории</title>
     <style>
         body { font-family: Arial, sans-serif; }
-        #orders, #categories, #products { margin-top: 20px; }
-        .order, .category, .product { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        #orders, #categories, #products, #reviews { margin-top: 20px; }
+        .order, .category, .product, .review { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -20,10 +20,14 @@
     <h1>Продукты</h1>
     <div id="products"></div>
 
+    <h1>Отзывы</h1>
+    <div id="reviews"></div>
+
     <script>
         const ordersContainer = document.getElementById('orders');
         const categoriesContainer = document.getElementById('categories');
         const productsContainer = document.getElementById('products');
+        const reviewsContainer = document.getElementById('reviews');
 
         // WebSocket для заказов
         const ordersSocket = new WebSocket('ws://' + window.location.host + '/ws/orders/');
@@ -39,11 +43,9 @@
             if (data.order_details) {
                 const orderDetails = data.order_details;
 
-                // Создание блока для отображения информации о заказе
                 const orderDiv = document.createElement('div');
                 orderDiv.classList.add('order');
                 
-                // Формирование HTML-контента для заказа
                 orderDiv.innerHTML = `
                     <strong>Заказ №${orderDetails.order_id}</strong><br>
                     Пользователь: ${orderDetails.user}<br>
@@ -55,7 +57,6 @@
                         `).join('')}
                     </ul>
                 `;
-                // Добавление блока на страницу
                 ordersContainer.appendChild(orderDiv);
             }
         };
@@ -82,16 +83,13 @@
             if (data.category_details) {
                 const categoryDetails = data.category_details;
 
-                // Создание блока для отображения информации о категории
                 const categoryDiv = document.createElement('div');
                 categoryDiv.classList.add('category');
                 
-                // Формирование HTML-контента для категории
                 categoryDiv.innerHTML = `
                     <strong>Категория: ${categoryDetails.name}</strong><br>
                     ID: ${categoryDetails.category_id}
                 `;
-                // Добавление блока на страницу
                 categoriesContainer.appendChild(categoryDiv);
             }
         };
@@ -118,11 +116,9 @@
             if (data.product_details) {
                 const productDetails = data.product_details;
 
-                // Создание блока для отображения информации о продукте
                 const productDiv = document.createElement('div');
                 productDiv.classList.add('product');
                 
-                // Формирование HTML-контента для продукта
                 productDiv.innerHTML = `
                     <strong>Продукт: ${productDetails.name}</strong><br>
                     ID: ${productDetails.product_id}<br>
@@ -130,7 +126,6 @@
                     Остаток: ${productDetails.stock}<br>
                     Категория: ${productDetails.category}
                 `;
-                // Добавление блока на страницу
                 productsContainer.appendChild(productDiv);
             }
         };
@@ -141,6 +136,40 @@
 
         productsSocket.onclose = function() {
             console.log('WebSocket закрыт для продуктов');
+        };
+
+        // WebSocket для отзывов
+        const reviewsSocket = new WebSocket('ws://' + window.location.host + '/ws/reviews/');
+
+        reviewsSocket.onopen = function() {
+            console.log('WebSocket подключен для отзывов');
+        };
+
+        reviewsSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение о отзыве:', data);
+
+            if (data.review_details) {
+                const reviewDetails = data.review_details;
+
+                const reviewDiv = document.createElement('div');
+                reviewDiv.classList.add('review');
+                
+                reviewDiv.innerHTML = `
+                    <strong>Отзыв о продукте: ${reviewDetails.product}</strong><br>
+                    Рейтинг: ${reviewDetails.rating}<br>
+                    Комментарий: ${reviewDetails.comment}<br>
+                `;
+                reviewsContainer.appendChild(reviewDiv);
+            }
+        };
+
+        reviewsSocket.onerror = function(error) {
+            console.error('WebSocket ошибка для отзывов:', error);
+        };
+
+        reviewsSocket.onclose = function() {
+            console.log('WebSocket закрыт для отзывов');
         };
     </script>
 </body>

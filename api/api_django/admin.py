@@ -1,12 +1,21 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Category, Order, OrderProduct, Product, PurchaseHistory, User, ProductReview, Discount
+from .models import (
+    Category,
+    Discount,
+    Order,
+    OrderProduct,
+    Product,
+    ProductReview,
+    PurchaseHistory,
+    User,
+)
 
 
 class CustomUserAdmin(UserAdmin):
     model = User
-    list_display = ['id', "username", "email", "first_name", "last_name", "role"]
+    list_display = ["id", "username", "email", "first_name", "last_name", "role"]
     list_filter = ["role"]
     search_fields = ["username", "email"]
     ordering = ["username"]
@@ -23,7 +32,16 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "category", "price", "stock", "pub_date", "video", 'image')
+    list_display = (
+        "id",
+        "name",
+        "category",
+        "price",
+        "stock",
+        "pub_date",
+        "video",
+        "image",
+    )
     list_filter = ("category",)
     search_fields = ("name", "description")
 
@@ -54,15 +72,36 @@ class ProductReviewAdmin(admin.ModelAdmin):
         "image",
     )
     list_filter = ("rating", "created_at")
-    search_fields = ("product__name", "customer__user__username", "comment")
+    search_fields = (
+        "product__name",
+        "customer__user__username",
+        "comment",
+        "sentiment",
+    )
+
 
 @admin.register(Discount)
 class DiscountAdmin(admin.ModelAdmin):
-    list_display = ['code', 'discount_percentage', 'valid_from', 'valid_to', 'is_active']
-    search_fields = ['code']
+    list_display = [
+        "code",
+        "discount_percentage",
+        "valid_from",
+        "valid_to",
+        "is_active",
+    ]
+    search_fields = ["code"]
+
 
 @admin.register(PurchaseHistory)
 class PurchaseHistoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'order', 'product', 'price', 'quantity', 'purchase_date')
-    list_filter = ('user', 'purchase_date')
-    search_fields = ('user__username', 'product__name')
+    list_display = (
+        "id",
+        "user",
+        "order",
+        "product",
+        "price",
+        "quantity",
+        "purchase_date",
+    )
+    list_filter = ("user", "purchase_date")
+    search_fields = ("user__username", "product__name")
