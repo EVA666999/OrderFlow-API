@@ -85,6 +85,10 @@ jobs:
         pip install flake8==6.0.0 flake8-isort==6.0.0
         pip install -r ./api/requirements.txt 
     # Этот шаг дополним переменными для доступа к БД
+    - name: Debug SECRET_KEY
+      run: echo "SECRET_KEY=${SECRET_KEY::3}***"
+      env:
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
     - name: Test with flake8 and django tests
       # Добавляем env-переменные для доступа к БД
       env:
