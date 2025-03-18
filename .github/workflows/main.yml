@@ -103,8 +103,8 @@ jobs:
       run: |
         python -m flake8 api/
         cd api/
-        pytest api/tests/test_views.py
-        pytest api/tests/test_urls.py
-        pytest api/tests/test_aichat.py
+        run: pytest tests/
+
+
 
 
