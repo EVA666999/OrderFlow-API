@@ -1,16 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import (
-    Category,
-    Discount,
-    Order,
-    OrderProduct,
-    Product,
-    ProductReview,
-    PurchaseHistory,
-    User,
-)
+from .models import (Category, Discount, Order, OrderProduct, Product,
+                     ProductReview, PurchaseHistory, User)
 
 
 class CustomUserAdmin(UserAdmin):

@@ -6,11 +6,8 @@ from api_django.models import User
 from api_django.permissions import IsAdminOrAuthenticated
 
 from .models import User
-from .serializers import (
-    CustomUserCreateSerializer,
-    CustomUserUpdateSerializer,
-    Usersermeializer,
-)
+from .serializers import (CustomUserCreateSerializer,
+                          CustomUserUpdateSerializer, Usersermeializer)
 
 
 class UsersViewSet(viewsets.ReadOnlyModelViewSet):
