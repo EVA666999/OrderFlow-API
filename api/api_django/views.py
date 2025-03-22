@@ -1,13 +1,11 @@
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
-from rest_framework import filters, viewsets
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
 import logging
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.cache import cache
-
+from rest_framework import filters, viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import Category, Discount, Order, Product, ProductReview
 from .permissions import (IsAdminOrCustomer, IsAdminOrEmployee,
@@ -18,6 +16,7 @@ from .serializers import (CategorySerializer, DiscountSerializer,
 
 logger = logging.getLogger(__name__)
 
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -27,13 +26,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         """Кэшируем список Заказов"""
         orders = cache.get("orders")
         if not orders:
-            logger.info("Кэш пуст, загружаем данные из базы.")
+            print("Кэш пуст, загружаем данные из базы.")
             orders = list(Order.objects.values())
             cache.set("orders", orders, timeout=600)
         else:
-            logger.info("Данные загружены из кэша.")
+            print("Данные загружены из кэша.")
         return Response(orders)
-
 
     def perform_create(self, serializer):
         """
@@ -54,11 +52,12 @@ class OrderViewSet(viewsets.ModelViewSet):
             "total_price": order.total_price,
             "products": [
                 {
-                    "name": product.product.name,
-                    "price": product.product.price,
-                    "quantity": product.quantity,
+                    "product__id": order_product.product.id,
+                    "product__name": order_product.product.name,
+                    "product__quantity": order_product.quantity,
+                    "product__price": order_product.product.price,
                 }
-                for product in order.orderproduct_set.all()
+                for order_product in order.orderproduct_set.all()
             ],
         }
 
@@ -70,7 +69,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "order_details": order_details,
             },
         )
-        
+
         order_cache = {
             "id": order.id,
             "user": order.user.username,
@@ -80,19 +79,17 @@ class OrderViewSet(viewsets.ModelViewSet):
                     "product__id": order_product.product.id,
                     "product__name": order_product.product.name,
                     "quantity": order_product.quantity,
-                    "product__price": order_product.product.price
+                    "product__price": order_product.product.price,
                 }
                 for order_product in order.orderproduct_set.all()
-            ]
+            ],
         }
-
 
         orders = cache.get("orders") or []
         print(f"Текущее содержимое кэша orders: {orders}")
 
         orders.append(order_cache)
         cache.set("orders", orders, timeout=600)
-        
 
     def get_queryset(self):
         """
@@ -113,9 +110,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         Добавляем промокод в контекст для сериализатора.
         """
         context = super().get_serializer_context()
-        context["discount"] = self.request.data.get(
-            "discount", None
-        )  # Добавляем промокод в контекст
+        context["discount"] = self.request.data.get("discount", None)
         return context
 
 
@@ -126,7 +121,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ["name", "category__name"]
     ordering_fields = ["price", "pub_date"]
-    ordering = ["price"]  
+    ordering = ["price"]
 
     def list(self, request, *args, **kwargs):
         """Кэшируем список продуктов"""
@@ -135,7 +130,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             products = list(Product.objects.values())
             cache.set("products", products, timeout=600)
         return Response(products)
-
 
     def perform_create(self, serializer):
         product = serializer.save()
@@ -150,8 +144,8 @@ class ProductViewSet(viewsets.ModelViewSet):
             "stock": product.stock,
         }
 
-        async_to_sync(channel_layer.group_send)(  # Отправка через WebSocket
-            "product_group",  # Название группы
+        async_to_sync(channel_layer.group_send)(
+            "product_group",
             {
                 "type": "send_product_details",
                 "product_details": product_details,
@@ -164,25 +158,20 @@ class ProductViewSet(viewsets.ModelViewSet):
             "price": product.price,
             "stock": product.stock,
         }
-        
-        products = cache.get("products") or [] 
+
+        products = cache.get("products") or []
         print(f"Текущее содержимое кэша products: {products}")
 
         products.append(product_cache)
-        cache.set("products", products, timeout=600) # кэшируем данные за 10 мин
-
+        cache.set("products", products, timeout=600)  # кэшируем данные за 10 мин
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
-            return [
-                IsAuthenticated()
-            ]  # Все аутентифицированные пользователи могут просматривать продукты
+            return [IsAuthenticated()]
         elif self.action == "create":
-            return [IsAdminOrSupplier()]  # Только поставщик может создавать продукт
+            return [IsAdminOrSupplier()]
         elif self.action in ["update", "partial_update", "destroy"]:
-            return [
-                IsAdminOrSupplier()
-            ]  # Только админ или сотрудник могут редактировать продукт
+            return [IsAdminOrSupplier()]
         return super().get_permissions()
 
 
@@ -199,34 +188,28 @@ class CategoryViewSet(viewsets.ModelViewSet):
         return Response(categories)
 
     def perform_create(self, serializer):
-        # Для создания категории - доступ только у админа
         category = serializer.save()
         channel_layer = get_channel_layer()
         category_details = {"category_id": category.id, "name": category.name}
 
-        async_to_sync(channel_layer.group_send)(  # Отправка через WebSocket
-            "category_group",  # Название группы
+        async_to_sync(channel_layer.group_send)(
+            "category_group",
             {
-                "type": "send_category_details",  # Тип события для consumer
+                "type": "send_category_details",
                 "category_details": category_details,
             },
         )
-
 
     def get_permissions(self):
         """
         Определяем разрешения в зависимости от действия.
         """
         if self.action == "list" or self.action == "retrieve":
-            return [
-                IsAuthenticated()
-            ]  # Все аутентифицированные пользователи могут просматривать продукты
+            return [IsAuthenticated()]
         elif self.action == "create":
-            # Для создания продукта - доступ только у поставщика
             return [IsAdminOrEmployee()]
         elif self.action in ["update", "partial_update", "destroy"]:
-            # Для редактирования и удаления продуктов - либо админ, либо сотрудник
-            return [IsAdminOrEmployee()]  # Если админ или сотрудник
+            return [IsAdminOrEmployee()]
         return super().get_permissions()
 
 

@@ -1,4 +1,3 @@
-from api_django.urls import api
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -7,6 +6,8 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
+
+from api_django.urls import api
 from users.urls import users
 
 security_definition = {

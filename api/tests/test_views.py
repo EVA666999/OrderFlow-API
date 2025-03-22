@@ -1,8 +1,9 @@
 import pytest
-from api_django.models import Category, Discount, Order, Product, ProductReview
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from api_django.models import Category, Discount, Order, Product, ProductReview
 
 
 @pytest.fixture

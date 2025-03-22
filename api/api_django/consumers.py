@@ -15,8 +15,15 @@ class OrderConsumer(AsyncWebsocketConsumer):
     async def send_order_details(self, event):
         order_details = event["order_details"]
         order_details["total_price"] = float(order_details["total_price"])
-        for product in order_details["products"]:
-            product["price"] = float(product["price"])
+        order_details["products"] = [
+            {
+                "id": product.get("product__id"),
+                "name": product.get("product__name"),
+                "price": float(product.get("product__price", 0)),
+                "quantity": int(product.get("product__quantity", 0)),
+            }
+            for product in order_details["products"]
+        ]
 
         await self.send(text_data=json.dumps({"order_details": order_details}))
 

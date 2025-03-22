@@ -1,11 +1,9 @@
 """Подключаем sqlalchemy"""
 
 import os
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from dotenv import load_dotenv
 
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
 
 load_dotenv()
 
@@ -18,6 +16,4 @@ DB_PORT = os.getenv("DB_PORT_local")
 DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{DB_HOST}:{DB_PORT}/{POSTGRES_DB}?client_encoding=UTF8"
 
 
-
 engine = create_engine(DATABASE_URL, echo=True)
-

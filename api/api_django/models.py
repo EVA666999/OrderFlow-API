@@ -3,6 +3,7 @@ from django.utils import timezone
 from googletrans import Translator
 from textblob import TextBlob
 from transformers import pipeline
+
 from users.models import User
 
 
@@ -68,36 +69,33 @@ class OrderProduct(models.Model):
         return f"{self.quantity} x {self.product.name}"
 
 
-# def analyze_sentiment(text):
-#     # Переводим текст на английский для лучшего анализа
-#     translator = Translator()
-#     translated_text = translator.translate(text, src="ru", dest="en").text
+def analyze_sentiment(text):
+    # Переводим текст на английский для лучшего анализа
+    translator = Translator()
+    translated_text = translator.translate(text, src="ru", dest="en").text
 
-#     # Анализируем переведенный текст
-#     blob = TextBlob(translated_text)
-#     sentiment = (
-#         blob.sentiment.polarity
-#     )  # Полярность текста от -1 (негативный) до 1 (позитивный)
-#     return sentiment
-
-
-# sentiment_analyzer = pipeline(
-#     "sentiment-analysis", model="blanchefort/rubert-base-cased-sentiment"
-# )
+    # Анализируем переведенный текст
+    blob = TextBlob(translated_text)
+    sentiment = (
+        blob.sentiment.polarity
+    )  # Полярность текста от -1 (негативный) до 1 (позитивный)
+    return sentiment
 
 
-# Модель ProductReview
+sentiment_analyzer = pipeline(
+    "sentiment-analysis", model="blanchefort/rubert-base-cased-sentiment"
+)
+
+
 class ProductReview(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="reviews"
-    )  # Привязываем к продукту
+    )
     customer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="product_reviews"
-    )  # Связь с клиентом
-    rating = models.PositiveIntegerField(
-        choices=[(i, str(i)) for i in range(1, 6)]
-    )  # Оценка от 1 до 5
-    comment = models.TextField()  # Текст отзыва
+    )
+    rating = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(1, 6)])
+    comment = models.TextField()
     sentiment = models.CharField(max_length=10, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)  # Дата создания отзыва
     video = models.FileField(upload_to="video_review/", null=True, blank=True)
@@ -106,46 +104,41 @@ class ProductReview(models.Model):
     def __str__(self):
         return f"Отзыв на {self.product.name} от {self.customer.username}"
 
-    # def analyze_sentiment(self):
-    #     """
-    #     Метод для анализа настроения отзыва. Использует модель sentiment-analysis
-    #     для оценки текста отзыва.
+    def analyze_sentiment(self):
+        """
+        Метод для анализа настроения отзыва. Использует модель sentiment-analysis
+        для оценки текста отзыва.
 
-    #     Возвращает:
-    #     - 1, если отзыв положительный
-    #     - -1, если отзыв отрицательный
-    #     - 0, если отзыв нейтральный
+        Метод анализирует поле `comment`, получая результат с помощью предварительно
+        обученной модели, которая возвращает метку настроения (POSITIVE/NEGATIVE/NEUTRAL)
+        и соответствующий балл.
+        """
+        if isinstance(self.comment, str):
+            result = sentiment_analyzer(self.comment)
+            sentiment_label = result[0]["label"]
+            score = result[0]["score"]
 
-    #     Метод анализирует поле `comment`, получая результат с помощью предварительно
-    #     обученной модели, которая возвращает метку настроения (POSITIVE/NEGATIVE/NEUTRAL)
-    #     и соответствующий балл.
-    #     """
-    #     if isinstance(self.comment, str):
-    #         result = sentiment_analyzer(self.comment)
-    #         sentiment_label = result[0]["label"]
-    #         score = result[0]["score"]
+            if sentiment_label == "POSITIVE" and score > 0.6:
+                return "POSITIVE"
+            elif sentiment_label == "NEGATIVE" and score > 0.6:
+                return "NEGATIVE"
+            else:
+                return "NEUTRAL"
 
-    #         if sentiment_label == "POSITIVE" and score > 0.6:
-    #             return "POSITIVE"
-    #         elif sentiment_label == "NEGATIVE" and score > 0.6:
-    #             return "NEGATIVE"
-    #         else:
-    #             return "NEUTRAL"
+    def save(self, *args, **kwargs):
+        if not isinstance(self.comment, str):
+            self.comment = str(self.comment)
+        self.sentiment = str(self.analyze_sentiment())
 
-    # def save(self, *args, **kwargs):
-    #     if not isinstance(self.comment, str):
-    #         self.comment = str(self.comment)
-    #     self.sentiment = str(self.analyze_sentiment())
-
-    #     super(ProductReview, self).save(*args, **kwargs)
+        super(ProductReview, self).save(*args, **kwargs)
 
 
 class Discount(models.Model):
-    code = models.CharField(max_length=50, unique=True)  # Промокод
-    discount_percentage = models.PositiveIntegerField()  # Процент скидки
-    valid_from = models.DateField()  # Изменено на DateField
-    valid_to = models.DateField()  # Изменено на DateField
-    is_active = models.BooleanField(default=True)  # Активность промокода
+    code = models.CharField(max_length=50, unique=True)
+    discount_percentage = models.PositiveIntegerField()
+    valid_from = models.DateField()
+    valid_to = models.DateField()
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.code} - {self.discount_percentage}%"
