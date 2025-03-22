@@ -1,7 +1,7 @@
 # OrderFlow API – Управление заказами и продуктами
 Этот проект представляет собой API для управления заказами и продуктами, построенное с использованием Django, Django REST Framework, и интеграцией с ИИ для генерации SQL-запросов и анализа тональности комментариев.
 
-🛠 Стек технологий: Python, Django, Django REST Framework, PostgreSQL, JWT, MISTRAL AI, NGINX, Redis, Gunicorn, Docker, CI/CD, Pytest.
+🛠 Стек технологий: Python, Django, Django REST Framework, PostgreSQL, JWT, MISTRAL AI, NGINX, Redis, Gunicorn, Docker, CI/CD, Pytest, WebSocket.
 
 ## Особенности
 
