@@ -78,12 +78,14 @@ class OrderSerializer(serializers.ModelSerializer):
             "discount_amount",
         )
 
-    def get_products_data(self, obj):  # Исправил название метода
-        return list(
+    def get_products_data(self, obj):
+        products_data = list(
             OrderProduct.objects.filter(order=obj).values(
                 "product__id", "product__name", "quantity", "product__price"
             )
         )
+        # print(f"Продукты для заказа {obj.id}: {products_data}")
+        return products_data
 
     def get_discount_amount(self, obj):
         """

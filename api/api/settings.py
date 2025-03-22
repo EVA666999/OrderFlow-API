@@ -93,7 +93,15 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",  # Используем InMemory вместо Redis
     },
 }
-# user@example.com string1234
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
@@ -101,11 +109,11 @@ CHANNEL_LAYERS = {
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'db_for_api_django',
-#         'USER': 'postgres',
-#         'PASSWORD': 'Kohkau11999',
-#         'HOST': 'localhost',  # Или IP, если база на удалённом сервере
-#         'PORT': '5432',  # Стандартный порт PostgreSQL
+#         'NAME':  os.getenv("POSTGRES_DB_local", "django"),
+#         'USER': os.getenv("POSTGRES_USER_local", "django"),
+#         'PASSWORD': os.getenv("POSTGRES_PASSWORD_local", ""),
+#         'HOST': os.getenv("DB_HOST_local", ""),
+#         'PORT': os.getenv("DB_PORT_local", 5432),
 #     }
 # }
 
@@ -226,3 +234,21 @@ SWAGGER_SETTINGS = {
     },
 }
 SWAGGER_USE_COMPAT_RENDERERS = False
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console'],
+#             'level': 'DEBUG',  # Или INFO
+#             'propagate': True,
+#         },
+#     },
+# }

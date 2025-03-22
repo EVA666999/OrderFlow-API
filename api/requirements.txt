@@ -26,6 +26,10 @@ psycopg2-binary
 python-dotenv
 django-extensions
 pycodestyle==2.10.0
+SQLAlchemy
+redis
+django-redis
+
 
 
 # Совместимые версии httpx и зависимостей

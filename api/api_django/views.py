@@ -1,7 +1,13 @@
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from rest_framework import filters, viewsets
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
+import logging
+
+from django.core.cache import cache
+
 
 from .models import Category, Discount, Order, Product, ProductReview
 from .permissions import (IsAdminOrCustomer, IsAdminOrEmployee,
@@ -10,11 +16,24 @@ from .serializers import (CategorySerializer, DiscountSerializer,
                           OrderSerializer, ProductReviewSerializer,
                           ProductSerializer)
 
+logger = logging.getLogger(__name__)
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     ordering_fields = ["pub_date", "total_price"]
+
+    def list(self, request, *args, **kwargs):
+        """Кэшируем список Заказов"""
+        orders = cache.get("orders")
+        if not orders:
+            logger.info("Кэш пуст, загружаем данные из базы.")
+            orders = list(Order.objects.values())
+            cache.set("orders", orders, timeout=600)
+        else:
+            logger.info("Данные загружены из кэша.")
+        return Response(orders)
+
 
     def perform_create(self, serializer):
         """
@@ -51,6 +70,29 @@ class OrderViewSet(viewsets.ModelViewSet):
                 "order_details": order_details,
             },
         )
+        
+        order_cache = {
+            "id": order.id,
+            "user": order.user.username,
+            "total_price": order.total_price,
+            "products": [
+                {
+                    "product__id": order_product.product.id,
+                    "product__name": order_product.product.name,
+                    "quantity": order_product.quantity,
+                    "product__price": order_product.product.price
+                }
+                for order_product in order.orderproduct_set.all()
+            ]
+        }
+
+
+        orders = cache.get("orders") or []
+        print(f"Текущее содержимое кэша orders: {orders}")
+
+        orders.append(order_cache)
+        cache.set("orders", orders, timeout=600)
+        
 
     def get_queryset(self):
         """
@@ -81,10 +123,19 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
-    filter_backends = (filters.SearchFilter,)  # Подключаем фильтр для поиска
-    search_fields = ["name", "category__name"]  # Указываем поля для поиска
-    ordering_fields = ["price", "pub_date"]  # Поля для сортировки
-    ordering = ["price"]  # По умолчанию сортируем по цене
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ["name", "category__name"]
+    ordering_fields = ["price", "pub_date"]
+    ordering = ["price"]  
+
+    def list(self, request, *args, **kwargs):
+        """Кэшируем список продуктов"""
+        products = cache.get("products")
+        if not products:
+            products = list(Product.objects.values())
+            cache.set("products", products, timeout=600)
+        return Response(products)
+
 
     def perform_create(self, serializer):
         product = serializer.save()
@@ -106,6 +157,20 @@ class ProductViewSet(viewsets.ModelViewSet):
                 "product_details": product_details,
             },
         )
+        product_cache = {
+            "product_id": product.id,
+            "category": product.category.name,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock,
+        }
+        
+        products = cache.get("products") or [] 
+        print(f"Текущее содержимое кэша products: {products}")
+
+        products.append(product_cache)
+        cache.set("products", products, timeout=600) # кэшируем данные за 10 мин
+
 
     def get_permissions(self):
         if self.action == "list" or self.action == "retrieve":
@@ -125,9 +190,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
 
-    def perform_create(self, serializerr):
+    def list(self, request, *args, **kwargs):
+        """Кэшируем список категорий"""
+        categories = cache.get("categories")
+        if not categories:
+            categories = list(Category.objects.values())
+            cache.set("categories", categories, timeout=600)
+        return Response(categories)
+
+    def perform_create(self, serializer):
         # Для создания категории - доступ только у админа
-        category = serializerr.save()
+        category = serializer.save()
         channel_layer = get_channel_layer()
         category_details = {"category_id": category.id, "name": category.name}
 
@@ -138,6 +211,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 "category_details": category_details,
             },
         )
+
 
     def get_permissions(self):
         """

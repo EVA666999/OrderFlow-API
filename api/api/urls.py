@@ -11,14 +11,13 @@ from users.urls import users
 
 security_definition = {
     "BearerAuth": openapi.Parameter(
-        "Authorization",  # Параметр для заголовка
-        openapi.IN_HEADER,  # Указываем, что это заголовок
-        description="Bearer token для авторизации",  # Описание
-        type=openapi.TYPE_STRING,  # Тип данных
+        "Authorization",
+        openapi.IN_HEADER,
+        description="Bearer token для авторизации",
+        type=openapi.TYPE_STRING,
     )
 }
 
-# Создаем schema_view без security в get_schema_view
 schema_view = get_schema_view(
     openapi.Info(
         title="My API",
@@ -29,7 +28,7 @@ schema_view = get_schema_view(
         license=openapi.License(name="MIT License"),
     ),
     public=True,
-    permission_classes=(AllowAny,),  # Открытый доступ для всех
+    permission_classes=(AllowAny,),
 )
 
 urlpatterns = [
