@@ -83,7 +83,7 @@ def analyze_sentiment(text):
 
 
 sentiment_analyzer = pipeline(
-    "sentiment-analysis", model="blanchefort/rubert-base-cased-sentiment" # предназначена для анализа настроений на русском языке
+    "sentiment-analysis", model="blanchefort/rubert-base-cased-sentiment"  # предназначена для анализа настроений на русском языке
 )
 
 
