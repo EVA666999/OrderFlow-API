@@ -106,7 +106,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",  # Имя контейнера Redis
+        "LOCATION": "redis://redis:6379/1",  # 'redis' — это имя сервиса из docker-compose.yml
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
