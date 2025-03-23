@@ -90,6 +90,11 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
+      - name: Wait for Redis and PostgreSQL to be ready
+        run: |
+          echo "Waiting for Redis and PostgreSQL to be ready..."
+          sleep 10  # Пауза 10 секунд (можно увеличить, если нужно больше времени)
+
       - name: Test with flake8 and django tests
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
