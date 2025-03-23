@@ -25,18 +25,10 @@ jobs:
       - name: Build and Push Backend Image
         uses: docker/build-push-action@v4
         with:
-          context: ./api/redis/
+          context: ./api/
           file: ./api/Dockerfile  # Указываем путь к Dockerfile явно
           push: true
           tags: ihnupfidi1/backend_api:latest
-
-      - name: Build Redis Image (locally)
-        uses: docker/build-push-action@v4
-        with:
-          context: ./redis  # Путь к папке с Dockerfile для Redis
-          file: ./api/redis/Dockerfile
-          push: false  # Не пушим на Docker Hub, только строим локально
-          tags: local/redis:latest  # Локальный тег для Redis
 
   build_nginx_and_push_to_docker_hub:
     name: Push nginx Docker image to DockerHub
@@ -76,7 +68,7 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
       redis:
-        image: local/redis:latest  # Используем локально собранный образ Redis
+        image: redis:7
         ports:
           - 6379:6379
 
@@ -98,24 +90,22 @@ jobs:
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
-      - name: Wait for Redis and PostgreSQL to be ready
-        run: |
-          echo "Waiting for Redis and PostgreSQL to be ready..."
-          sleep 10  # Пауза 10 секунд (можно увеличить, если нужно больше времени)
-
       - name: Test with flake8 and django tests
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
           POSTGRES_USER: django_user
           POSTGRES_PASSWORD: django_password
           POSTGRES_DB: django_db
-          DB_HOST: localhost
+          DB_HOST: 127.0.0.1
           DB_PORT: 5432
-          REDIS_HOST: redis  # Используем имя контейнера Redis
+          REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
         run: |
           python -m flake8 api/
           cd api/
           pytest tests/
+
+
+
 
 

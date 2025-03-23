@@ -41,12 +41,12 @@ services:
       - backend_network  # Добавляем сервис в сеть
 
   redis:
-    build:
-      image: ihnupfidi1/redis
+    image: redis:7
+    restart: always
     ports:
       - "6379:6379"
     networks:
-      - app_network
+      - backend_network  # Добавляем сервис в сеть
 
   backend:
     image: ihnupfidi1/backend
