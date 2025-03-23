@@ -140,6 +140,7 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", 5432),
     }
 }
+CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST", "localhost")}:{os.getenv("REDIS_PORT", 6379)}'
 
 
 # Password validation
