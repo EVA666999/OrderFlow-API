@@ -22,12 +22,11 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ("id", "category", "name", "price", "stock", "video", "image")
 
-    # def get_comment(self, obj):
-    #     reviews = ProductReview.objects.filter(product=obj)
-    #     if reviews.exists():
-    #         return [review.comment for review in reviews]
-    #     else:
-    #         return f"Количество коментариев {len(reviews)}"
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["price"] = float(instance.price)
+        representation["stock"] = float(instance.stock)
+        return representation
 
 
 class OrderProductSerializer(serializers.ModelSerializer):
@@ -84,8 +83,11 @@ class OrderSerializer(serializers.ModelSerializer):
                 "product__id", "product__name", "quantity", "product__price"
             )
         )
-        # print(f"Продукты для заказа {obj.id}: {products_data}")
+        # Приводим поле product__price к float, чтобы JSON смог его сериализовать
+        for product in products_data:
+            product["product__price"] = float(product["product__price"])
         return products_data
+
 
     def get_discount_amount(self, obj):
         """
@@ -106,9 +108,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         products_data = validated_data.pop("products", [])
-        discount_obj = validated_data.pop(
-            "discount", None
-        )  # Теперь это объект Discount
+        discount_obj = validated_data.pop("discount", None)
 
         order = Order.objects.create(user=validated_data["user"])
         total_price = Decimal(0)
@@ -126,19 +126,15 @@ class OrderSerializer(serializers.ModelSerializer):
             product.save()
 
             OrderProduct.objects.create(order=order, product=product, quantity=quantity)
-            total_price += Decimal(product.price) * Decimal(quantity)
+            total_price += Decimal(product.price) * Decimal(quantity)  #ок
 
         # Проверяем скидку
-        if discount_obj:
-            discount_percentage = discount_obj.discount_percentage
-        else:
-            discount_percentage = 0
-
+        discount_percentage = discount_obj.discount_percentage if discount_obj else 0
         discount_amount = (total_price * Decimal(discount_percentage)) / Decimal(100)
         total_price -= discount_amount
 
-        order.total_price = total_price
-        order.discount = discount_obj  # Применяем скидку к заказу
+        order.total_price = float(total_price)
+        order.discount = discount_obj
         order.save()
 
         return order
@@ -181,20 +177,16 @@ class OrderSerializer(serializers.ModelSerializer):
         discount_amount = (total_price * Decimal(discount_percentage)) / Decimal(100)
         total_price -= discount_amount
 
-        order.total_price = total_price
+        order.total_price = float(total_price)
         order.discount = discount_obj  # Применяем скидку к заказу
         order.save()
 
         return order
 
     def to_representation(self, instance):
-        """
-        Переписываем метод to_representation для того, чтобы передать `discount` в контекст сериализатора
-        """
         representation = super().to_representation(instance)
-        representation["discount"] = self.context.get(
-            "discount"
-        )  # Передаем промокод в контекст
+        representation["total_price"] = float(instance.total_price)
+        representation["discount"] = self.context.get("discount")
         return representation
 
 

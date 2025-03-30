@@ -34,7 +34,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["vasilekretsu.com", "www.vasilekretsu.com", "backend"]
 
 
 # Application definition
@@ -90,56 +90,60 @@ ASGI_APPLICATION = "api.asgi.application"  # Замените на назван�
 
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",  # Используем InMemory вместо Redis
-    },
-}
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
         },
-    }
+    },
 }
 
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://localhost:6379/1",  # для локального подключения, если Redis работает на хосте
+#         "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
 #         "OPTIONS": {
 #             "CLIENT_CLASS": "django_redis.client.DefaultClient",
 #         },
 #     }
 # }
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://localhost:6379/1",  # для локального подключения, если Redis работает на хосте
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("POSTGRES_DB_local", "django"),
-#         "USER": os.getenv("POSTGRES_USER_local", "django"),
-#         "PASSWORD": os.getenv("POSTGRES_PASSWORD_local", ""),
-#         "HOST": os.getenv("DB_HOST_local", ""),
-#         "PORT": os.getenv("DB_PORT_local", 5432),
-#     }
-# }
-
 DATABASES = {
     "default": {
-        # Меняем настройку Django: теперь для работы будет использоваться
-        # бэкенд postgresql
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "django"),
-        "USER": os.getenv("POSTGRES_USER", "django"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", ""),
-        "PORT": os.getenv("DB_PORT", 5432),
+        "NAME": os.getenv("POSTGRES_DB_local", "django"),
+        "USER": os.getenv("POSTGRES_USER_local", "django"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD_local", ""),
+        "HOST": os.getenv("DB_HOST_local", ""),
+        "PORT": os.getenv("DB_PORT_local", 5432),
     }
 }
+
+# DATABASES = {
+#     "default": {
+#         # Меняем настройку Django: теперь для работы будет использоваться
+#         # бэкенд postgresql
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("POSTGRES_DB", "django"),
+#         "USER": os.getenv("POSTGRES_USER", "django"),
+#         "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+#         "HOST": os.getenv("DB_HOST", ""),
+#         "PORT": os.getenv("DB_PORT", 5432),
+#     }
+# }
 CELERY_BROKER_URL = f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}"
 
 # Password validation

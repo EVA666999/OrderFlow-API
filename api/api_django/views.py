@@ -49,13 +49,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         order_details = {
             "order_id": order.id,
             "user": order.user.username,
-            "total_price": order.total_price,
+            "total_price": float(order.total_price),
             "products": [
                 {
                     "product__id": order_product.product.id,
                     "product__name": order_product.product.name,
                     "product__quantity": order_product.quantity,
-                    "product__price": order_product.product.price,
+                    "product__price": float(order_product.product.price),
                 }
                 for order_product in order.orderproduct_set.all()
             ],
@@ -73,13 +73,13 @@ class OrderViewSet(viewsets.ModelViewSet):
         order_cache = {
             "id": order.id,
             "user": order.user.username,
-            "total_price": order.total_price,
+            "total_price": float(order.total_price),
             "products": [
                 {
                     "product__id": order_product.product.id,
                     "product__name": order_product.product.name,
                     "quantity": order_product.quantity,
-                    "product__price": order_product.product.price,
+                    "product__price": float(order_product.product.price),
                 }
                 for order_product in order.orderproduct_set.all()
             ],
