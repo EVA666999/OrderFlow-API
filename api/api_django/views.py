@@ -8,11 +8,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Category, Discount, Order, Product, ProductReview
-from .permissions import (IsAdminOrCustomer, IsAdminOrEmployee,
-                          IsAdminOrSupplier)
-from .serializers import (CategorySerializer, DiscountSerializer,
-                          OrderSerializer, ProductReviewSerializer,
-                          ProductSerializer)
+from .permissions import IsAdminOrCustomer, IsAdminOrEmployee, IsAdminOrSupplier
+from .serializers import (
+    CategorySerializer,
+    DiscountSerializer,
+    OrderSerializer,
+    ProductReviewSerializer,
+    ProductSerializer,
+)
 
 logger = logging.getLogger(__name__)
 

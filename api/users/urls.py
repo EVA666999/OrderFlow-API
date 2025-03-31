@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from .views import UpdateUserRoleView, UsersmeViewSet, UsersViewSet
+from .views import UpdateUserRoleView, UsersmeViewSet, UsersViewSet, YandexAuthView
 
 users = routers.DefaultRouter()
 
@@ -12,6 +12,7 @@ urlpatterns = [
     path(
         "update_user/<int:pk>/", UpdateUserRoleView.as_view(), name="update-user-role"
     ),
+    path("auth/yandex/", YandexAuthView.as_view(), name="yandex-auth"),
 ]
 
 urlpatterns += users.urls

@@ -34,7 +34,13 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['79.133.183.58', '127.0.0.1', 'localhost', 'vasilekretsu.ru', 'www.vasilekretsu.ru' ]
+ALLOWED_HOSTS = [
+    "79.133.183.58",
+    "127.0.0.1",
+    "localhost",
+    "vasilekretsu.ru",
+    "www.vasilekretsu.ru",
+]
 
 
 # Application definition
@@ -55,6 +61,7 @@ INSTALLED_APPS = [
     "aichat",
     "drf_yasg",
     "corsheaders",
+    "social_django",
 ]
 
 MIDDLEWARE = [
@@ -93,7 +100,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [("orderflow-api-redis-1", 6379)],
-  # Подключение к контейнеру Redis в Docker если docker redis/localhost  "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
+            # Подключение к контейнеру Redis в Docker если docker redis/localhost  "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
         },
     },
 }
@@ -104,12 +111,12 @@ CACHES = {
         "LOCATION": "redis://orderflow-api-redis-1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        },
     }
 }
 
 
-#local
+# local
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
@@ -271,3 +278,13 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 #         },
 #     },
 # }
+
+
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.yandex.YandexOAuth2",
+    "django.contrib.auth.backends.ModelBackend",  # Обычная аутентификация
+)
+
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = "e54a436087b2456a9893e77d01592337"
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = "0b75eb2e67d04c8eaa011c59ac5bb2aa"
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "http://vasilekretsu.ru/auth/complete/yandex/"

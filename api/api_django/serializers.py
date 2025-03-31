@@ -2,8 +2,7 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from .models import (Category, Discount, Order, OrderProduct, Product,
-                     ProductReview)
+from .models import Category, Discount, Order, OrderProduct, Product, ProductReview
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -88,7 +87,6 @@ class OrderSerializer(serializers.ModelSerializer):
             product["product__price"] = float(product["product__price"])
         return products_data
 
-
     def get_discount_amount(self, obj):
         """
         Метод для вычисления скидки на основе промокода.
@@ -126,7 +124,7 @@ class OrderSerializer(serializers.ModelSerializer):
             product.save()
 
             OrderProduct.objects.create(order=order, product=product, quantity=quantity)
-            total_price += Decimal(product.price) * Decimal(quantity)  #ок
+            total_price += Decimal(product.price) * Decimal(quantity)  # ок
 
         # Проверяем скидку
         discount_percentage = discount_obj.discount_percentage if discount_obj else 0
