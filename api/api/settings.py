@@ -294,3 +294,4 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = "http://vasilekretsu.ru/error/"
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
 SOCIAL_AUTH_SANITIZE_REDIRECTS = True
 SOCIAL_AUTH_YANDEX_OAUTH2_EXTRA_DATA = ['username', 'email', 'role', 'password']
+SESSION_COOKIE_DOMAIN = ".vasilekretsu.ru"
