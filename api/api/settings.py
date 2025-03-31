@@ -285,7 +285,9 @@ AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",  # Обычная аутентификация
 )
 
-SOCIAL_AUTH_YANDEX_KEY = "e54a436087b2456a9893e77d01592337"
-SOCIAL_AUTH_YANDEX_SECRET = "0b75eb2e67d04c8eaa011c59ac5bb2aa"
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "http://vasilekretsu.ru/success/"
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = "e54a436087b2456a9893e77d01592337"
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = "0b75eb2e67d04c8eaa011c59ac5bb2aa"
 
+SOCIAL_AUTH_URL_NAMESPACE = "social"  # ВАЖНО
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = "http://vasilekretsu.ru/success/"
+SOCIAL_AUTH_LOGIN_ERROR_URL = "http://vasilekretsu.ru/error/"
