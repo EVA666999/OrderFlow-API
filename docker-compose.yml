@@ -1,5 +1,55 @@
+# volumes:
+#   pg_data1:
+
+# services:
+#   db1:
+#     image: postgres:13
+#     env_file: .env
+#     volumes:
+#       - pg_data1:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+
+#   redis:
+#     image: redis:7
+#     restart: always
+#     ports:
+#       - "6379:6379"
+
+#   backend:
+#     build: /api
+#     env_file: .env
+#     ports:
+#       - "8000:8000"
+#     networks:
+#       - backend_network
+#     depends_on:
+#       - db1
+#       - redis
+
+#   nginx:
+#     build: ./api/nginx
+#     env_file: .env
+#     ports:
+#       - "80:80"
+#     networks:
+#       - backend_network
+#     depends_on:
+#       - backend
+
+# networks:
+#   backend_network:
+#     driver: bridge
+
+
+
+version: "3.8"
+
+
 volumes:
   pg_data1:
+  static_data:
+  media_data:
 
 services:
   db1:
@@ -7,29 +57,37 @@ services:
     env_file: .env
     volumes:
       - pg_data1:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks:
+      - backend_network
+    expose:
+      - "5432"
 
   redis:
     image: redis:7
     restart: always
-    ports:
-      - "6379:6379"
-
-  backend:
-    build: /api
-    env_file: .env
-    ports:
-      - "8000:8000"
     networks:
       - backend_network
+    expose:
+      - "6379"
+
+  backend:
+    image: ihnupfidi1/backend
+    env_file: .env
+    volumes:
+      - static_data:/staticfiles
+      - media_data:/media
     depends_on:
       - db1
       - redis
+    networks:
+      - backend_network
 
   nginx:
-    build: ./api/nginx
+    image: ihnupfidi1/nginx
     env_file: .env
+    volumes:
+      - static_data:/staticfiles
+      - media_data:/media
     ports:
       - "80:80"
     networks:
@@ -40,53 +98,3 @@ services:
 networks:
   backend_network:
     driver: bridge
-
-
-
-# version: '3.8'
-
-# volumes:
-#   pg_data1:
-#   static_data:
-
-# services:
-#   db1:
-#     image: postgres:13
-#     env_file: .env
-#     volumes:
-#       - pg_data1:/var/lib/postgresql/data
-#     networks:
-#       - backend_network  # Добавляем сервис в сеть
-
-#   redis:
-#     image: redis:7
-#     restart: always
-#     ports:
-#       - "6379:6379"
-#     networks:
-#       - backend_network  # Добавляем сервис в сеть
-
-#   backend:
-#     image: ihnupfidi1/backend
-#     env_file: .env
-#     volumes:
-#       - static_data:/staticfiles
-#     depends_on:
-#       - db1
-#       - redis  #backend зависит от Redis и db1
-#     networks:
-#       - backend_network  # Добавляем сервис в сеть
-
-#   nginx:
-#     image: ihnupfidi1/nginx
-#     env_file: .env
-#     volumes:
-#       - static_data:/staticfiles
-#     ports:
-#       - "80:80"
-#     networks:
-#       - backend_network  # Добавляем сервис в сеть
-
-# networks:
-#   backend_network:
-#     driver: bridge  # Используем сеть bridge
