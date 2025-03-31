@@ -107,13 +107,25 @@ CHANNEL_LAYERS = {
 #     }
 # }
 
+#local
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://localhost:6379/1",  # для локального подключения, если Redis работает на хосте
+#         "OPTIONS": {
+#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+#         },
+#     }
+# }
+
+#prod
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",  # для локального подключения, если Redis работает на хосте
+        "LOCATION": "redis://orderflow-api-redis-1:6379/1",  # Используй имя контейнера
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
+        }
     }
 }
 
