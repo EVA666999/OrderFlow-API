@@ -37,7 +37,7 @@ class UsersmeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
-
+from datetime import datetime, timedelta
 
 from social_django.utils import load_strategy
 from social_core.exceptions import AuthException
@@ -46,56 +46,34 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
+from social_django.utils import psa
+from django.conf import settings
+from django.http import JsonResponse
+import jwt
+from django.conf import settings
 
+# Создаем JWT токен
+def generate_jwt_token(user):
+    payload = {
+        'user_id': user.id,
+        'email': user.email,
+        'username': user.username,
+        'exp': datetime.utcnow() + timedelta(hours=24),  # Токен будет действителен 24 часа
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
+    return token
 
-import logging
+# Представление для завершения авторизации через Яндекс
+@psa('social:complete')
+def yandex_oauth_complete(request, backend):
+    try:
+        # Получаем пользователя, который авторизовался через Яндекс
+        user = request.backend.do_auth(request.GET.get('code'))
 
-logger = logging.getLogger(__name__)
+        # Генерируем JWT токен
+        token = generate_jwt_token(user)
 
-class YandexAuthView(APIView):
-    @csrf_exempt
-    def post(self, request):
-        logger.debug("Session before auth: %s", request.session)
-        strategy = load_strategy(request)
-        backend = "yandex-oauth2"
-        try:
-            # Получаем пользователя через OAuth2
-            user = request.backend.do_auth(request.data.get("access_token"))
-            if user:
-                # Если пользователь не найден, создаем его с ролью USER
-                if not User.objects.filter(email=user.email).exists():
-                    new_user = User.objects.create_user(
-                        username=user.username, 
-                        email=user.email, 
-                        role=User.USER
-                    )
-                    user = new_user
-                logger.debug("Session after auth: %s", request.session)
-                login(request, user)
-                refresh = RefreshToken.for_user(user)
-                return Response(
-                    {
-                        "refresh": str(refresh),
-                        "access": str(refresh.access_token),
-                    }
-                )
-        except AuthException:
-            logger.error("Auth exception: %s", str(e))
-            return Response({"error": "Ошибка авторизации"}, status=400)
-
-
-class ObtainJWTFromSessionView(APIView):
-    """
-    Представление для получения JWT-токенов для аутентифицированного пользователя.
-    Если пользователь успешно аутентифицирован (например, через social_django),
-    то GET-запрос к этому endpoint вернет ему JWT-токены.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        })
+        # Возвращаем JWT токен в ответе
+        return JsonResponse({'token': token})
+    except AuthException as e:
+        return JsonResponse({'error': str(e)}, status=400)

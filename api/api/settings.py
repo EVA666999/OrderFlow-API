@@ -72,6 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "app.api_django.middleware.JWTAuthenticationMiddleware",
 ]
 
 ROOT_URLCONF = "api.urls"
@@ -280,27 +281,13 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 # }
 
 
-AUTHENTICATION_BACKENDS = (
-    "social_core.backends.yandex.YandexOAuth2",
-    "django.contrib.auth.backends.ModelBackend",  # Обычная аутентификация
+SOCIAL_AUTH_YANDEX_OAUTH2_KEY = 'e54a436087b2456a9893e77d01592337'
+SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = '0b75eb2e67d04c8eaa011c59ac5bb2aa'
+SOCIAL_AUTH_YANDEX_OAUTH2_SCOPE = ['email']
+SOCIAL_AUTH_YANDEX_OAUTH2_REDIRECT_URI = 'http://vasilekretsu.ru/auth/complete/yandex-oauth2/'
+
+# Указываем, что будем работать с токенами, а не сессиями
+SOCIAL_AUTH_AUTHENTICATION_BACKENDS = (
+    'social_core.backends.yandex.YandexOAuth2',
+    'django.contrib.auth.backends.ModelBackend',  # Используем стандартную модель пользователей
 )
-
-SOCIAL_AUTH_YANDEX_OAUTH2_KEY = "e54a436087b2456a9893e77d01592337"
-SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = "0b75eb2e67d04c8eaa011c59ac5bb2aa"
-
-SOCIAL_AUTH_URL_NAMESPACE = "social"  # ВАЖНО
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = "/api"
-SOCIAL_AUTH_LOGIN_ERROR_URL = "http://vasilekretsu.ru/error/"
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
-SOCIAL_AUTH_SANITIZE_REDIRECTS = True
-SOCIAL_AUTH_YANDEX_OAUTH2_EXTRA_DATA = ['email']
-SESSION_COOKIE_DOMAIN = ".vasilekretsu.ru"
-
-SOCIAL_AUTH_YANDEX_OAUTH2_SCOPE = ["login:email", "login:info"]
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-
-
-
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Используется сессия в базе данных
-SESSION_COOKIE_AGE = 60 * 60 * 24  # Время жизни сессии 1 день

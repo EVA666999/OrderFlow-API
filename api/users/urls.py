@@ -1,5 +1,6 @@
 from django.urls import path
 from rest_framework import routers
+from . import views
 
 from .views import ObtainJWTFromSessionView, UpdateUserRoleView, UsersmeViewSet, UsersViewSet, YandexAuthView
 
@@ -12,8 +13,7 @@ urlpatterns = [
     path(
         "update_user/<int:pk>/", UpdateUserRoleView.as_view(), name="update-user-role"
     ),
-    path("auth/yandex/", YandexAuthView.as_view(), name="yandex-auth"),
-    path("auth/token_from_session/", ObtainJWTFromSessionView.as_view(), name="token-from-session"),
+    path('auth/complete/yandex-oauth2/', views.yandex_oauth_complete, name='yandex_oauth_complete'),
 ]
 
 urlpatterns += users.urls
