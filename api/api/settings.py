@@ -34,7 +34,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["vasilekretsu.com", "www.vasilekretsu.com", "backend"]
+ALLOWED_HOSTS = ['79.133.183.58', '127.0.0.1', 'localhost', 'vasilekretsu.ru', 'www.vasilekretsu.ru' ]
 
 
 # Application definition
