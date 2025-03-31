@@ -71,7 +71,7 @@ services:
       - "6379"
 
   backend:
-    image: ihnupfidi1/backend
+    build: /api
     env_file: .env
     volumes:
       - static_data:/staticfiles
@@ -83,7 +83,7 @@ services:
       - backend_network
 
   nginx:
-    image: ihnupfidi1/nginx
+    build: ./api/nginx
     env_file: .env
     volumes:
       - static_data:/staticfiles
