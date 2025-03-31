@@ -294,7 +294,13 @@ SOCIAL_AUTH_LOGIN_ERROR_URL = "http://vasilekretsu.ru/error/"
 SOCIAL_AUTH_REDIRECT_IS_HTTPS = False
 SOCIAL_AUTH_SANITIZE_REDIRECTS = True
 SOCIAL_AUTH_YANDEX_OAUTH2_EXTRA_DATA = ['email']
-SESSION_COOKIE_DOMAIN = None
+SESSION_COOKIE_DOMAIN = ".vasilekretsu.ru"
+
 SOCIAL_AUTH_YANDEX_OAUTH2_SCOPE = ["login:email", "login:info"]
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Используется сессия в базе данных
+SESSION_COOKIE_AGE = 60 * 60 * 24  # Время жизни сессии 1 день
