@@ -65,3 +65,20 @@ class YandexAuthView(APIView):
                 )
         except AuthException:
             return Response({"error": "Ошибка авторизации"}, status=400)
+
+
+class ObtainJWTFromSessionView(APIView):
+    """
+    Представление для получения JWT-токенов для аутентифицированного пользователя.
+    Если пользователь успешно аутентифицирован (например, через social_django),
+    то GET-запрос к этому endpoint вернет ему JWT-токены.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        })
