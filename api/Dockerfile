@@ -10,4 +10,5 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "api.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "120", "api.wsgi"]
+
