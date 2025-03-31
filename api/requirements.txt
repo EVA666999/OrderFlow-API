@@ -14,7 +14,7 @@ channels_redis
 # transformers
 # torch
 # tensorflow
-tf-keras
+# tf-keras
 openai
 langchain
 autopep8
