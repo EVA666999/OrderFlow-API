@@ -92,20 +92,22 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
+            "hosts": [("orderflow-api-redis-1", 6379)],
+  # Подключение к контейнеру Redis в Docker если docker redis/localhost  "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
         },
     },
 }
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": f"redis://{os.getenv('REDIS_HOST', 'localhost')}:{os.getenv('REDIS_PORT', 6379)}/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         },
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://orderflow-api-redis-1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
 
 #local
 # CACHES = {
