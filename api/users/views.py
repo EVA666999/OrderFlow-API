@@ -45,13 +45,19 @@ from django.contrib.auth import login
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.csrf import csrf_exempt
 
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 class YandexAuthView(APIView):
+    @csrf_exempt
     def post(self, request):
+        logger.debug("Session before auth: %s", request.session)
         strategy = load_strategy(request)
         backend = "yandex-oauth2"
-
         try:
             # Получаем пользователя через OAuth2
             user = request.backend.do_auth(request.data.get("access_token"))
@@ -64,7 +70,7 @@ class YandexAuthView(APIView):
                         role=User.USER
                     )
                     user = new_user
-
+                logger.debug("Session after auth: %s", request.session)
                 login(request, user)
                 refresh = RefreshToken.for_user(user)
                 return Response(
@@ -74,6 +80,7 @@ class YandexAuthView(APIView):
                     }
                 )
         except AuthException:
+            logger.error("Auth exception: %s", str(e))
             return Response({"error": "Ошибка авторизации"}, status=400)
 
 
