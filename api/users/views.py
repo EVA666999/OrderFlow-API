@@ -53,8 +53,18 @@ class YandexAuthView(APIView):
         backend = "yandex-oauth2"
 
         try:
+            # Получаем пользователя через OAuth2
             user = request.backend.do_auth(request.data.get("access_token"))
             if user:
+                # Если пользователь не найден, создаем его с ролью USER
+                if not User.objects.filter(email=user.email).exists():
+                    new_user = User.objects.create_user(
+                        username=user.username, 
+                        email=user.email, 
+                        role=User.USER
+                    )
+                    user = new_user
+
                 login(request, user)
                 refresh = RefreshToken.for_user(user)
                 return Response(

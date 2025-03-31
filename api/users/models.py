@@ -68,6 +68,10 @@ class User(AbstractUser):
     @property
     def is_customer(self):
         return self.role == self.CUSTOMER
+    
+    @property
+    def is_user(self):
+        return self.role == self.USER
 
 
 class Customer(models.Model):
