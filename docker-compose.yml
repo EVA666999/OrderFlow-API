@@ -71,7 +71,7 @@ services:
       - "6379"
 
   backend:
-    build: /api
+    build: ./api
     env_file: .env
     volumes:
       - static_data:/staticfiles
