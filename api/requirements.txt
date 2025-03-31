@@ -9,9 +9,9 @@ channels
 daphne
 uvicorn
 channels_redis
-textblob==0.15.3
-googletrans==4.0.2
-transformers
+# textblob==0.15.3
+# googletrans==4.0.2
+# transformers
 # torch
 # tensorflow
 tf-keras
