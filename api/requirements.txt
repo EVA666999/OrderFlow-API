@@ -30,6 +30,7 @@ pycodestyle==2.10.0
 SQLAlchemy
 redis
 django-redis
+rest_framework_jwt
 social-auth-app-django
 
 
