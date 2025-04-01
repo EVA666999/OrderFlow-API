@@ -55,7 +55,7 @@ import requests
 YANDEX_CLIENT_ID = settings.SOCIAL_AUTH_YANDEX_OAUTH2_KEY
 YANDEX_CLIENT_SECRET = settings.SOCIAL_AUTH_YANDEX_OAUTH2_SECRET
 # Исправляем URI редиректа, чтобы он соответствовал вашему обработчику
-YANDEX_REDIRECT_URI = 'http://vasilekretsu.ru/auth/callback/yandex/'
+YANDEX_REDIRECT_URI = "http://vasilekretsu.ru/users/callback/yandex/"
 
 class YandexLoginView(APIView):
     permission_classes = [AllowAny]

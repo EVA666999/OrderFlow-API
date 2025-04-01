@@ -284,7 +284,7 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 SOCIAL_AUTH_YANDEX_OAUTH2_KEY = 'e54a436087b2456a9893e77d01592337'
 SOCIAL_AUTH_YANDEX_OAUTH2_SECRET = '0b75eb2e67d04c8eaa011c59ac5bb2aa'
 SOCIAL_AUTH_YANDEX_OAUTH2_SCOPE = ['email']
-SOCIAL_AUTH_YANDEX_OAUTH2_REDIRECT_URI = "http://vasilekretsu.ru/users/callback/yandex/"
+# SOCIAL_AUTH_YANDEX_OAUTH2_REDIRECT_URI = "http://vasilekretsu.ru/users/callback/yandex/"
 
 
 # Указываем, что будем работать с токенами, а не сессиями
