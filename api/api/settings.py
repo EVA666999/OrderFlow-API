@@ -13,9 +13,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from datetime import timedelta, timezone
 from pathlib import Path
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.core.exceptions import ImproperlyConfigured
-
 
 from dotenv import load_dotenv
 
@@ -32,10 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs")
-
-if not SECRET_KEY:
-    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -78,7 +72,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "api_django.middleware.JWTAuthenticationMiddleware",
+    "app.api_django.middleware.JWTAuthenticationMiddleware",
 ]
 
 ROOT_URLCONF = "api.urls"
@@ -212,14 +206,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.AllowAny",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
 }
-
-
 
 
 SIMPLE_JWT = {
@@ -296,16 +290,4 @@ SOCIAL_AUTH_YANDEX_OAUTH2_REDIRECT_URI = 'http://vasilekretsu.ru/auth/complete/y
 SOCIAL_AUTH_AUTHENTICATION_BACKENDS = (
     'social_core.backends.yandex.YandexOAuth2',
     'django.contrib.auth.backends.ModelBackend',  # Используем стандартную модель пользователей
-)
-
-
-SOCIAL_AUTH_PIPELINE = (
-    'social_core.pipeline.social_auth.social_details',
-    'social_core.pipeline.social_auth.social_uid',
-    'social_core.pipeline.social_auth.auth_allowed',
-    'social_core.pipeline.social_auth.social_user',
-    'social_core.pipeline.user.get_username',
-    'social_core.pipeline.user.create_user',
-    'social_core.pipeline.user.user_details',
-    'api.auth_pipeline.activate_user',  # Добавляем кастомный шаг
 )
