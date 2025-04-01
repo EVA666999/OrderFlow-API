@@ -47,8 +47,8 @@ class UsersmeViewSet(viewsets.ReadOnlyModelViewSet):
 class YandexOAuthView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        code = request.data.get('code')
+    def get(self, request):
+        code = request.GET.get('code')
         if not code:
             return Response({'error': 'No code provided'}, status=status.HTTP_400_BAD_REQUEST)
         
