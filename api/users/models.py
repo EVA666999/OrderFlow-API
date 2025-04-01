@@ -44,6 +44,14 @@ class User(AbstractUser):
     )
     is_active = models.BooleanField(default=True, verbose_name="Активен")
 
+    yandex_oauth_id = models.CharField(
+        max_length=255, 
+        unique=True, 
+        null=True, 
+        blank=True,
+        verbose_name="Яндекс OAuth ID"
+)
+
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
