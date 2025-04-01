@@ -59,8 +59,13 @@ class YandexOAuthView(APIView):
         
         refresh = RefreshToken.for_user(user)
         
-        redirect_url = f'http://vasilekretsu.ru/api/?access_token={refresh.access_token}&refresh_token={refresh}'
-        return redirect(redirect_url)
+        return Response({
+            'user_id': user.id,
+            'email': user.email,
+            'access_token': str(refresh.access_token),
+            'refresh_token': str(refresh),
+            'username': user.username
+        })
     
 
     def _get_oauth_token(self, code):
