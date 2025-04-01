@@ -37,9 +37,12 @@ class User(AbstractUser):
         choices=ROLE_CHOICES,
         max_length=150,
         blank=True,
+        null=True,
+        default="user",
         verbose_name="Роль",
         help_text="Выберите роль",
     )
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
