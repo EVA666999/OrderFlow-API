@@ -79,6 +79,8 @@ services:
     depends_on:
       - db1
       - redis
+    environment:
+      - SECRET_KEY=django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs
     networks:
       - backend_network
 

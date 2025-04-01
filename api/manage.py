@@ -3,10 +3,10 @@
 import os
 import sys
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Добавляем путь проекта в PYTHONPATH
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 def main():
     """Run administrative tasks."""

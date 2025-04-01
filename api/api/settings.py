@@ -14,6 +14,8 @@ import os
 from datetime import timedelta, timezone
 from pathlib import Path
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.core.exceptions import ImproperlyConfigured
+
 
 from dotenv import load_dotenv
 
@@ -31,6 +33,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs")
+
+if not SECRET_KEY:
+    raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
