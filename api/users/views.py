@@ -49,27 +49,16 @@ class YandexOAuthView(APIView):
 
     def get(self, request):
         code = request.GET.get('code')
-        if not code:
-            return Response({'error': 'No code provided'}, status=status.HTTP_400_BAD_REQUEST)
         
         token_response = self._get_oauth_token(code)
-        if not token_response:
-            return Response({'error': 'Failed to get access token'}, status=status.HTTP_400_BAD_REQUEST)
         
         user_info = self._get_user_info(token_response['access_token'])
-        if not user_info:
-            return Response({'error': 'Failed to get user info'}, status=status.HTTP_400_BAD_REQUEST)
         
         user = self._get_or_create_user(user_info)
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user_id': user.id,
-            'email': user.email,
-        }, status=status.HTTP_200_OK)
+        
+        login(request, user)
+        
+        return redirect('/auth/jwt/create/')
     
 
     def _get_oauth_token(self, code):
