@@ -33,6 +33,5 @@ django-redis
 social-auth-app-django
 
 
-
 # Совместимые версии httpx и зависимостей
 httpx>=0.27.2,<1.0.0
