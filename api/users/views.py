@@ -80,9 +80,8 @@ class YandexOAuthView(APIView):
         
         response = requests.post(token_url, data=token_data)
         
-        # Добавьте печать для отладки
-        print("Token Response Status:", response.status_code)
-        print("Token Response Content:", response.text)
+        # print("Token Response Status:", response.status_code)
+        # print("Token Response Content:", response.text)
     
         return response.json() if response.status_code == 200 else None
     def _get_user_info(self, access_token):

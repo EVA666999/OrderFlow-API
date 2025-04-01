@@ -309,7 +309,6 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
             )
         else:
             # Стандартное создание пользователя
-            password = validated_data.pop("password")
             user = User.objects.create_user(
                 username=validated_data["username"],
                 email=validated_data["email"],
