@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework import routers
 from . import views
-from users.views import YandexLoginView, YandexAuthCallbackView
+from users.views import YandexLoginView
 from .views import UpdateUserRoleView, UsersmeViewSet, UsersViewSet
 
 users = routers.DefaultRouter()
