@@ -41,6 +41,17 @@ class UsersmeViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
     
+def get_yandex_auth_url():
+    client_id = 'e54a436087b2456a9893e77d01592337'  # Заменить на свой client_id, полученный от Яндекса
+    redirect_uri = 'http://vasilekretsu.ru/users/callback/yandex/'  # Этот URL должен совпадать с тем, что указан в настройках приложения на Яндексе
+    scope = 'email'  # Права доступа, которые ты хочешь запросить
+    response_type = 'code'  # Мы будем получать код для обмена на токен
+
+    auth_url = f"https://oauth.yandex.ru/authorize?response_type={response_type}&client_id={client_id}&redirect_uri={redirect_uri}&scope={scope}"
+
+    return auth_url
+
+    
 # Функция для получения информации о пользователе из Яндекса с использованием OAuth токена
 def get_user_info_from_yandex(oauth_token):
     url = 'https://login.yandex.ru/info?format=jwt'
@@ -95,5 +106,22 @@ class YandexCallbackView(APIView):
         decoded_info = decode_jwt(user_info)
 
         return Response(decoded_info, status=status.HTTP_200_OK)
+    
+    def get_oauth_token(self, code):
+        url = 'https://oauth.yandex.ru/token'
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': 'your_client_id',
+            'client_secret': 'your_client_secret',
+            'redirect_uri': 'http://vasilekretsu.ru/users/callback/yandex/',  # Убедись, что redirect_uri совпадает с тем, что ты указал в Яндекс приложении
+        }
+        response = requests.post(url, data=data)
+        
+        if response.status_code == 200:
+            return response.json().get('access_token')
+        
+        print(f"Error exchanging code for token: {response.status_code} - {response.text}")
+        return None
 
 #http://vasilekretsu.ru/users/login/yandex/
