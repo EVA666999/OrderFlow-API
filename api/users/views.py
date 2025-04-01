@@ -1,3 +1,4 @@
+from django.views import View
 from rest_framework import viewsets
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -41,7 +42,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import include, path
 from django.views.generic import TemplateView
@@ -68,42 +69,41 @@ class YandexLoginView(APIView):
         return redirect(yandex_auth_url)
     
 
-class YandexCallbackView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
+class YandexCallbackView(View):
+    def get(self, request, *args, **kwargs):
+        # Получаем код авторизации
         code = request.GET.get('code')
-        if not code:
-            return JsonResponse({'error': 'No code received from Yandex OAuth'}, status=400)
-        
-        token_url = "https://oauth.yandex.ru/token"
-        data = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "client_id": YANDEX_CLIENT_ID,
-            "client_secret": YANDEX_CLIENT_SECRET,
-        }
 
-        response = requests.post(token_url, data=data)
+        # Отправляем запрос на обмен кода на токен
+        response = requests.post(
+            'https://oauth.yandex.ru/token',
+            data={
+                'grant_type': 'authorization_code',
+                'code': code,
+                'client_id': 'e54a436087b2456a9893e77d01592337',  # замените на ваш CLIENT_ID
+                'client_secret': '0b75eb2e67d04c8eaa011c59ac5bb2aa',  # замените на ваш CLIENT_SECRET
+                'redirect_uri': 'http://vasilekretsu.ru/users/callback/yandex/',  # проверьте redirect_uri
+            }
+        )
+
+        # Проверка статуса ответа
         if response.status_code != 200:
-            return JsonResponse({'error': 'Failed to get access token from Yandex'}, status=500)
-        token_data = response.json()
-        access_token = token_data.get('access_token') 
+            # Если ошибка, выводим ответ и статус
+            print(f"Error response from Yandex: {response.status_code} - {response.text}")
+            return HttpResponse("Error during OAuth2 authentication", status=500)
 
-        user_info_url = f"https://api.yandex.ru/user/info?oauth_token={access_token}"
-        response = requests.get(user_info_url)
-        print(response.json())
-        if response.status_code != 200:
-            return JsonResponse({'error': 'Failed to get user info from Yandex'}, status=500)
-        
-        user_info_url = "https://login.yandex.ru/info"
-        headers = {"Authorization": f"OAuth {access_token}"}
-        user_info_response = requests.get(user_info_url, headers=headers)
+        try:
+            # Попытка распарсить JSON ответ
+            data = response.json()
+            # Выводим полученные данные для отладки
+            print("YANDEX RESPONSE:", data)
+        except requests.exceptions.JSONDecodeError:
+            # Ловим ошибку, если ответ не JSON
+            print(f"Failed to parse JSON response: {response.text}")
+            return HttpResponse("Failed to parse Yandex response", status=500)
 
-        if user_info_response.status_code != 200:
-            return Response({"error": "Failed to get user info", "details": user_info_response.json()}, status=400)
-
-        user_info = user_info_response.json()
-
-        # Тут можно добавить логику по созданию или поиску пользователя в базе
-        return Response({"user_info": user_info, "access_token": access_token})
+        # Дальше обработка данных (например, сохранение токена или запрос к /info для получения данных пользователя)
+        # Вернуть успешный ответ, если все прошло хорошо
+        return HttpResponse("Yandex OAuth2 Callback success")
+    
+#http://vasilekretsu.ru/users/login/yandex/
