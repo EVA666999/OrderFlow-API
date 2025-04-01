@@ -8,7 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 
-from users.views import YandexAuthCallbackView, YandexLoginView
+from users.views import YandexLoginView, YandexCallbackView
 from api_django.urls import api
 from users.urls import users
 
@@ -41,7 +41,7 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("chat/", include("aichat.urls")),
     path("auth/login/yandex/", YandexLoginView.as_view(), name="yandex_login"),
-    path("auth/callback/yandex/", YandexAuthCallbackView.as_view(), name="yandex_callback"),
+    path("auth/callback/yandex/", YandexCallbackView.as_view(), name="yandex_callback"),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
