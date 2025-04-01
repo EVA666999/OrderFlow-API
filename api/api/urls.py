@@ -8,7 +8,7 @@ from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
 
 
-from api.users.views import YandexAuthCallbackView, YandexLoginView
+from users.views import YandexAuthCallbackView, YandexLoginView
 from api_django.urls import api
 from users.urls import users
 
