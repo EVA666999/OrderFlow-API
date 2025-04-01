@@ -6,7 +6,6 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
-from social_django.urls import urlpatterns as social_urls
 
 
 from api_django.urls import api
@@ -40,7 +39,6 @@ urlpatterns = [
     path("users/", include(users.urls)),
     path("users/", include("users.urls")),
     path("chat/", include("aichat.urls")),
-    path("auth/", include("social_django.urls", namespace="social")),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
