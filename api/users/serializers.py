@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.password_validation import validate_password
 from django.forms import ValidationError
 from rest_framework import serializers
@@ -296,13 +297,24 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         # Извлекаем пароль
         password = validated_data.pop("password")
 
-        # Шаг 1: Создаем пользователя
-        user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data["email"],
-            password=password,
-            role=validated_data["role"],
-        )
+        if validated_data.get('yandex_oauth_id'):
+        # Создание пользователя через OAuth
+            user = User.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data["email"],
+                password=str(uuid.uuid4()),  # Случайный пароль
+                role=validated_data.get("role", "user"),
+                yandex_oauth_id=validated_data.get("yandex_oauth_id")
+            )
+        else:
+            # Стандартное создание пользователя
+            password = validated_data.pop("password")
+            user = User.objects.create_user(
+                username=validated_data["username"],
+                email=validated_data["email"],
+                password=password,
+                role=validated_data["role"]
+            )
 
         # Шаг 2: Проверяем роль пользователя и создаем или обновляем информацию о нем
 
