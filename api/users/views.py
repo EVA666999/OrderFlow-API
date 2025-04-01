@@ -97,7 +97,12 @@ class YandexOAuthView(APIView):
                                             username=username, 
                                             password=User.objects.make_random_password(),
                                             role='user',
-                                            yandex_oauth_id=yandex_id)
+                                            yandex_oauth_id=yandex_id,
+                                            is_active=True)
+        if not user.is_active:
+            user.is_active = True
+            user.save()
+        
         return user
 
 class YandexLoginView(APIView):

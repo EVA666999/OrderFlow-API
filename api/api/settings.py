@@ -227,6 +227,7 @@ AUTH_USER_MODEL = "users.User"  # Замените 'yourapp' на имя ваш�
 DJOSER = {
     "SERIALIZERS": {
         "user_create": "users.serializers.CustomUserCreateSerializer",
+    'SEND_ACTIVATION_EMAIL': False,
     }
 }
 
