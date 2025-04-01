@@ -6,6 +6,8 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
+from social_django.urls import urlpatterns as social_urls
+
 
 from api_django.urls import api
 from users.urls import users
