@@ -38,14 +38,14 @@ class UpdateUserRoleView(UpdateAPIView):
 
 class UsersmeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = Usersermeializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
     
 
 class YandexOAuthView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         code = request.data.get('code')
