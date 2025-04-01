@@ -11,7 +11,7 @@ users.register("me", UsersmeViewSet, basename="me")
 urlpatterns = [
     path(
         "update_user/<int:pk>/", UpdateUserRoleView.as_view(), name="update-user-role"),
-    path("yandex-login/", YandexOAuthView.as_view(), name="yandex_login"),
+    path("callback/yandex/", YandexOAuthView.as_view(), name="yandex_callback"),
     path("login/yandex/", YandexLoginView.as_view(), name="yandex_login"),
 ]
 

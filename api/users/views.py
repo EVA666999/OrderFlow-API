@@ -121,5 +121,6 @@ class YandexLoginView(APIView):
             f"&scope=login:email"
         )
         return redirect(yandex_oauth_url)
+    
 
 #http://vasilekretsu.ru/users/login/yandex/
