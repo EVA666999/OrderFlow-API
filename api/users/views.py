@@ -1,3 +1,4 @@
+import uuid
 from django.views import View
 import jwt
 import requests
@@ -56,9 +57,15 @@ class YandexOAuthView(APIView):
         
         user = self._get_or_create_user(user_info)
         
-        login(request, user)
+        refresh = RefreshToken.for_user(user)
         
-        return redirect('/auth/jwt/create/')
+        return Response({
+            'user_id': user.id,
+            'email': user.email,
+            'access_token': str(refresh.access_token),
+            'refresh_token': str(refresh),
+            'username': user.username
+        })
     
 
     def _get_oauth_token(self, code):
@@ -91,11 +98,11 @@ class YandexOAuthView(APIView):
         yandex_id = user_info.get('id')
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(yandex_oauth_id=yandex_id)
         except User.DoesNotExist:
             user = User.objects.create_user(email=email, 
                                             username=username, 
-                                            password=User.objects.make_random_password(),
+                                            password=str(uuid.uuid4()),
                                             role='user',
                                             yandex_oauth_id=yandex_id,
                                             is_active=True)

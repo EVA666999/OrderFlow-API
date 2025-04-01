@@ -304,7 +304,8 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
                 email=validated_data["email"],
                 password=str(uuid.uuid4()),  # Случайный пароль
                 role=validated_data.get("role", "user"),
-                yandex_oauth_id=validated_data.get("yandex_oauth_id")
+                yandex_oauth_id=validated_data.get("yandex_oauth_id"),
+                is_active=True
             )
         else:
             # Стандартное создание пользователя
@@ -313,7 +314,8 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
                 username=validated_data["username"],
                 email=validated_data["email"],
                 password=password,
-                role=validated_data["role"]
+                role=validated_data["role"],
+                is_active=True
             )
 
         # Шаг 2: Проверяем роль пользователя и создаем или обновляем информацию о нем
