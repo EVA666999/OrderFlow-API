@@ -88,10 +88,11 @@ class YandexCallbackView(APIView):
         if response.status_code != 200:
             return JsonResponse({'error': 'Failed to get access token from Yandex'}, status=500)
         token_data = response.json()
-        access_token = token_data.get('access_token')
+        access_token = token_data.get('access_token') 
 
         user_info_url = f"https://api.yandex.ru/user/info?oauth_token={access_token}"
         response = requests.get(user_info_url)
+        print(response.json())
         if response.status_code != 200:
             return JsonResponse({'error': 'Failed to get user info from Yandex'}, status=500)
         
