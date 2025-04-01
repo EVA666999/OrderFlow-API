@@ -73,17 +73,22 @@ class YandexOAuthView(APIView):
     
 
     def _get_oauth_token(self, code):
-        token_url = 'https://oauth.yandex.ru/token'  # URL для получения токена
+        token_url = 'https://oauth.yandex.ru/token'
         token_data = {
-            'grant_type': 'authorization_code',  # Тип предоставления прав доступа
-            'code': code,  # Код, полученный от Яндекса после авторизации
-            'client_id': 'e54a436087b2456a9893e77d01592337',  # ID вашего приложения
-            'client_secret': '0b75eb2e67d04c8eaa011c59ac5bb2aa',  # Секретный ключ приложения
-            'redirect_uri': 'http://vasilekretsu.ru/users/callback/yandex/',  # URI перенаправления
-    }
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': 'e54a436087b2456a9893e77d01592337',
+            'client_secret': '0b75eb2e67d04c8eaa011c59ac5bb2aa',
+            'redirect_uri': 'http://vasilekretsu.ru/users/callback/yandex/',
+        }
+        
         response = requests.post(token_url, data=token_data)
-        return response.json() if response.status_code == 200 else None
+        
+        # Добавьте печать для отладки
+        print("Token Response Status:", response.status_code)
+        print("Token Response Content:", response.text)
     
+        return response.json() if response.status_code == 200 else None
     def _get_user_info(self, access_token):
         user_info_url = 'https://login.yandex.ru/info'
         headers = {'Authorization': f'OAuth {access_token}'}
