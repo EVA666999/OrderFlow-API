@@ -13,8 +13,8 @@ urlpatterns = [
     path(
         "update_user/<int:pk>/", UpdateUserRoleView.as_view(), name="update-user-role"
     ),
-    path("auth/login/yandex/", YandexLoginView.as_view(), name="yandex_login"),
-    path("auth/callback/yandex/", YandexAuthCallbackView.as_view(), name="yandex_callback"),
+    # path("auth/login/yandex/", YandexLoginView.as_view(), name="yandex_login"),
+    # path("auth/callback/yandex/", YandexAuthCallbackView.as_view(), name="yandex_callback"),
 ]
 
 urlpatterns += users.urls
