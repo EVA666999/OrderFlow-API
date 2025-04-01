@@ -38,9 +38,9 @@ urlpatterns = [
     path("users/", include(users.urls)),
     path("users/", include("users.urls")),
     path("chat/", include("aichat.urls")),
+    path("auth/", include("social_django.urls", namespace="social")),
     path("auth/", include("djoser.urls")),
     path("auth/", include("djoser.urls.jwt")),
-    path("auth/", include("social_django.urls", namespace="social")),
     path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc-ui"),
     path(
         "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger-ui"

@@ -58,7 +58,7 @@ def generate_jwt_token(user):
         'user_id': user.id,
         'email': user.email,
         'username': user.username,
-        'exp': datetime.utcnow() + timedelta(hours=24),  # Токен будет действителен 24 часа
+        'exp': datetime.utcnow() + timedelta(hours=1000),  # Токен будет действителен 24 часа
     }
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm='HS256')
     return token
