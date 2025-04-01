@@ -9,6 +9,8 @@ from social_core.exceptions import AuthException
 from django.contrib.auth import login
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.shortcuts import redirect
+from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api_django.models import User
@@ -103,5 +105,21 @@ class YandexOAuthView(APIView):
                                             role='user',
                                             yandex_oauth_id=yandex_id)
         return user
+
+class YandexLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        client_id = 'e54a436087b2456a9893e77d01592337'
+        redirect_uri = 'http://vasilekretsu.ru/users/callback/yandex/'
+
+        yandex_oauth_url = (
+            f"https://oauth.yandex.ru/authorize"
+            f"?response_type=code"
+            f"&client_id={client_id}"
+            f"&redirect_uri={redirect_uri}"
+            f"&scope=login:email"
+        )
+        return redirect(yandex_oauth_url)
 
 #http://vasilekretsu.ru/users/login/yandex/
