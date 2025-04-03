@@ -101,14 +101,15 @@ services:
       - backend_network
     depends_on:
       - backend
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     image: certbot/certbot
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --email eseeva228@gmail.com -d vasilekretsu.ru -d www.vasilekretsu.ru --agree-tos --no-eff-email --force-renewal
+    depends_on:
+      - nginx
+    command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --no-eff-email --force-renewal --email eseeva228@gmail.com -v
 
 networks:
   backend_network:
