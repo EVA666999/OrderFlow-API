@@ -6,7 +6,7 @@ RUN pip install --upgrade pip
 
 RUN pip install gunicorn==20.1.0
 
-COPY requirements.txt .
+COPY minimal-requirements.tx .
 
 RUN pip install -r minimal-requirements.txt --no-cache-dir
 
