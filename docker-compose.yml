@@ -101,11 +101,6 @@ services:
       - backend_network
     depends_on:
       - backend
-    volumes:
-    - static_data:/staticfiles
-    - media_data:/media
-    - certbot_conf:/etc/letsencrypt
-    - certbot_www:/var/www/certbot
 
   certbot:
     image: certbot/certbot
