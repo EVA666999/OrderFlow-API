@@ -96,7 +96,6 @@ services:
       - certbot_www:/var/www/certbot
     ports:
       - "80:80"
-      - "443:443"
     networks:
       - backend_network
     depends_on:
