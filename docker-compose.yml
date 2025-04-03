@@ -45,13 +45,14 @@
 ###################
 version: "3.2"
 
-
 volumes:
   pg_data1:
   static_data:
   media_data:
-  certbot_conf:    # добавьте эти две строки
-  certbot_www:     # добавьте эти две строки
+  certbot_conf:
+  certbot_www:
+  kafka_data:
+  zookeeper_data:
 
 services:
   db1:
@@ -72,6 +73,39 @@ services:
     expose:
       - "6379"
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend_network
+    
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+      - backend_network
+
   backend:
     build: ./api
     env_file: .env
@@ -81,8 +115,38 @@ services:
     depends_on:
       - db1
       - redis
+      - kafka
     environment:
       - SECRET_KEY=django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs
+      - SERVICE_NAME=backend
+    networks:
+      - backend_network
+
+  celery_worker:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+      - kafka
+    environment:
+      - SERVICE_NAME=celery_worker
+    networks:
+      - backend_network
+
+  celery_beat:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+      - celery_worker
+    environment:
+      - SERVICE_NAME=celery_beat
     networks:
       - backend_network
 

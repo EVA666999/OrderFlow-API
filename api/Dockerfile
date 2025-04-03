@@ -10,5 +10,16 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "120", "api.wsgi"]
+# Создаем директорию для логов
+RUN mkdir -p /var/log/celery
 
+# Создаем директорию для бэкапов
+RUN mkdir -p /app/backups
+
+# Делаем entrypoint исполняемым
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "120", "api.wsgi"]

@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from datetime import timedelta, timezone
 from pathlib import Path
-
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()  # Загружаем переменные окружения
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     "social_django",
+    
 ]
 
 MIDDLEWARE = [
@@ -154,7 +155,6 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", 5432),
     }
 }
-CELERY_BROKER_URL = "redis://redis:6379/0"
 
 
 # Password validation
@@ -293,3 +293,38 @@ SOCIAL_AUTH_AUTHENTICATION_BACKENDS = (
     'social_core.backends.yandex.YandexOAuth2',
     'django.contrib.auth.backends.ModelBackend',  # Используем стандартную модель пользователей
 )
+
+# Настройки Redis
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
+
+# Настройки Celery
+CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+# Настройки Django Celery Beat
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Настройки Kafka
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
+KAFKA_CONSUMER_GROUP_ID = 'django_consumer'
+
+CELERY_BEAT_SCHEDULE = {
+    'update-cache-every-10-minutes': {
+        'task': 'api_django.tasks.update_cache_periodically',
+        'schedule': 60 * 10,  # каждые 10 минут
+    },
+    'process-kafka-messages-every-minute': {
+        'task': 'api_django.tasks.process_kafka_messages',
+        'schedule': 60,  # каждую минуту
+        'kwargs': {'topic': 'orders', 'num_messages': 50},
+    },
+    'daily-database-backup': {
+        'task': 'api.tasks.backup_database',
+        'schedule': crontab(hour=2, minute=0),  # каждый день в 2:00
+    },
+}

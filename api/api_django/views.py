@@ -16,6 +16,10 @@ from .serializers import (
     ProductReviewSerializer,
     ProductSerializer,
 )
+from .tasks import (  # Добавляем импорт наших задач
+    send_order_confirmation_email,
+    produce_order_message,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +43,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """
         Создаем заказ и отправляем данные через WebSocket.
+        Также отправляем его в Kafka и ставим задачу на отправку письма через Celery.
         """
 
         # Сохраняем заказ, передавая промокод в контекст
         order = serializer.save(user=self.request.user)
-        # send_order_confirmation_email(order)
+        
+        # Ставим задачу на отправку email через Celery
+        send_order_confirmation_email.delay(order.id)
+        
+        # Ставим задачу на отправку сообщения в Kafka
+        produce_order_message.delay(order.id)
 
         # Получаем канал
         channel_layer = get_channel_layer()
