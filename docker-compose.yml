@@ -96,7 +96,7 @@ services:
       - certbot_www:/var/www/certbot
     ports:
       - "80:80"
-      - "443:443"  # добавьте этот порт
+      - "443:443"
     networks:
       - backend_network
     depends_on:
@@ -108,7 +108,7 @@ services:
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --email your@email.com -d vasilekretsu.ru -d www.vasilekretsu.ru --agree-tos --no-eff-email --force-renewal
+    command: certonly --webroot -w /var/www/certbot --email eseeva228@gmail.com -d vasilekretsu.ru -d www.vasilekretsu.ru --agree-tos --no-eff-email --force-renewal
 
 networks:
   backend_network:
