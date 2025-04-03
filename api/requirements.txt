@@ -2,44 +2,50 @@ Django==3.2.3
 djangorestframework==3.12.4
 djoser==2.1.0
 djangorestframework-simplejwt==4.7.2
-# psycopg2
 psycopg2-binary==2.9.10
 
-channels
-daphne
-uvicorn
-channels_redis
+# Channels и Websockets
+channels==4.0.0
+daphne==4.0.0
+uvicorn==0.23.2
+channels_redis==4.1.0
+
+# AI/ML (закомментированы пока не нужны)
 # textblob==0.15.3
 # googletrans==4.0.2
 # transformers
 # torch
 # tensorflow
 # tf-keras
-openai
-langchain
-autopep8
-black
-Pillow
-drf-yasg
-django-cors-headers
-pytest
-pytest-django
-python-dotenv
-django-extensions
+openai==0.28.1
+langchain==0.0.267
+
+# Разработка и форматирование
+autopep8==2.0.2
+black==23.3.0
 pycodestyle==2.10.0
-SQLAlchemy
-redis
-django-redis
-social-auth-app-django
 
+# Веб и API
+Pillow==10.0.0
+drf-yasg==1.21.7
+django-cors-headers==4.1.0
+httpx==0.27.2
 
-# Совместимые версии httpx и зависимостей
-httpx>=0.27.2,<1.0.0
+# Тестирование
+pytest==7.3.1
+pytest-django==4.5.2
 
+# Утилиты
+python-dotenv==1.0.0
+django-extensions==3.2.3
+SQLAlchemy==2.0.15
 
-
+# Redis, Kafka, Celery
+redis==4.6.0
+django-redis==5.2.0
+social-auth-app-django==5.2.0
 celery==5.3.1
 django-celery-beat==2.5.0
 django-celery-results==2.5.1
 kafka-python==2.0.2
-confluent-kafka==2.3.0
+confluent-kafka==2.2.0
