@@ -50,6 +50,8 @@ volumes:
   pg_data1:
   static_data:
   media_data:
+  certbot_conf:    # добавьте эти две строки
+  certbot_www:     # добавьте эти две строки
 
 services:
   db1:
