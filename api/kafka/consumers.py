@@ -22,7 +22,7 @@ class KafkaConsumer:
         self.consumer_config = {
             'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
             'group.id': group_id,
-            'auto.offset.reset': 'earliest'  # начинать с самого раннего сообщения
+            'auto.offset.reset': 'earliest'
         }
         
         self.consumer = Consumer(self.consumer_config)
@@ -31,13 +31,6 @@ class KafkaConsumer:
     def consume_messages(self, num_messages=1, timeout=1.0):
         """
         Получает сообщения из Kafka
-        
-        Args:
-            num_messages (int): Количество сообщений для получения
-            timeout (float): Таймаут в секундах для ожидания сообщений
-            
-        Returns:
-            list: Список полученных сообщений
         """
         messages = []
         
@@ -45,23 +38,14 @@ class KafkaConsumer:
             for _ in range(num_messages):
                 msg = self.consumer.poll(timeout=timeout)
                 
-                if msg is None:
+                if msg is None or msg.error():
                     continue
-                
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        # Достигнут конец партиции
-                        logger.info(f'Reached end of partition: {msg.topic()} [{msg.partition()}]')
-                    else:
-                        # Ошибка
-                        logger.error(f'Error consuming message: {msg.error()}')
-                else:
-                    # Получено сообщение
-                    try:
-                        message_value = json.loads(msg.value().decode('utf-8'))
-                        messages.append(message_value)
-                    except Exception as e:
-                        logger.error(f'Error decoding message: {e}')
+                    
+                try:
+                    message_value = json.loads(msg.value().decode('utf-8'))
+                    messages.append(message_value)
+                except Exception as e:
+                    logger.error(f'Error decoding message: {e}')
             
             return messages
             

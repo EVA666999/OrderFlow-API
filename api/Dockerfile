@@ -1,27 +1,17 @@
-FROM python:3.9
+FROM python:3.9-slim
 
 WORKDIR /app
 
-RUN pip install --upgrade pip
-
-RUN pip install gunicorn==20.1.0
-
+# Устанавливаем зависимости
 COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install -r requirements.txt --no-cache-dir
-
+# Копируем проект
 COPY . .
 
-# Создаем директорию для логов
-RUN mkdir -p /var/log/celery
+# Создаем директории для статических и медиа файлов
+RUN mkdir -p /staticfiles /media
 
-# Создаем директорию для бэкапов
-RUN mkdir -p /app/backups
+EXPOSE 8000
 
-# Делаем entrypoint исполняемым
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--timeout", "120", "api.wsgi"]
+CMD ["gunicorn", "api.wsgi:application", "--bind", "0.0.0.0:8000"]

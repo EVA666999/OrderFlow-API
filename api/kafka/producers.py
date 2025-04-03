@@ -13,13 +13,6 @@ class KafkaProducer:
         }
         self.producer = Producer(self.producer_config)
 
-    def delivery_report(self, err, msg):
-        """ Отчет о доставке сообщения """
-        if err is not None:
-            logger.error(f'Message delivery failed: {err}')
-        else:
-            logger.info(f'Message delivered to {msg.topic()} [{msg.partition()}]')
-
     def produce_message(self, topic, message_data):
         """
         Отправляет сообщение в указанный топик Kafka
@@ -36,13 +29,11 @@ class KafkaProducer:
             self.producer.produce(
                 topic=topic,
                 value=message_json,
-                callback=self.delivery_report
+                callback=lambda err, msg: logger.error(f'Message delivery failed: {err}') if err else None
             )
             
             # Запускаем обработку очереди сообщений
             self.producer.poll(0)
-            
-            # Дожидаемся отправки всех сообщений
             self.producer.flush()
             
             return True
