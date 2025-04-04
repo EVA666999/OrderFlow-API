@@ -1,20 +1,14 @@
-FROM python:3.9-slim
+FROM python:3.9-slim-bullseye
 
 WORKDIR /app
 
-# Обновляем и устанавливаем зависимости, используя более надёжный метод
+# Устанавливаем только необходимый минимум
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    apt-get update -y --allow-insecure-repositories && \
-    apt-get install -y --allow-unauthenticated gnupg2 apt-transport-https ca-certificates && \
-    mkdir -p /etc/apt/keyrings && \
-    apt-get install -y --allow-unauthenticated wget && \
-    sh -c 'wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg' && \
-    sh -c 'echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
-    apt-get update -y --allow-insecure-repositories && \
-    apt-get install -y --allow-unauthenticated postgresql-client && \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends postgresql-client && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Устанавливаем зависимости Python
 COPY requirements.txt .
