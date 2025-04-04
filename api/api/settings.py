@@ -19,17 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
-CORS_ORIGIN_ALLOW_ALL = True  # Разрешить доступ с любых источников
-CORS_ALLOW_ALL_ORIGINS = True  # Разрешить все источники
-CORS_ALLOW_CREDENTIALS = True  # Разрешить куки
-
-CSRF_TRUSTED_ORIGINS = [
-    'http://vasilekretsu.ru', 
-    'https://vasilekretsu.ru',
-    'http://79.133.183.58',
-    'http://localhost',
-    'http://127.0.0.1'
-]
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -41,19 +30,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False  # Из True в False
 
-ALLOWED_HOSTS = [
-    "79.133.183.58",
-    "127.0.0.1",
-    "localhost",
-    "vasilekretsu.ru",
+# Настройки CORS и CSRF
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    'http://vasilekretsu.ru', 
+    'https://vasilekretsu.ru',
+    'http://79.133.183.58',
+    'http://localhost',
+    'http://127.0.0.1'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://vasilekretsu.ru', 
+    'https://vasilekretsu.ru',
+    'http://79.133.183.58',
+    'http://localhost',
+    'http://127.0.0.1'
+]
 
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 # Application definition
 
 INSTALLED_APPS = [
