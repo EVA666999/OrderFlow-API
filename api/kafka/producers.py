@@ -40,3 +40,4 @@ class KafkaProducer:
         except Exception as e:
             logger.error(f'Error producing message to Kafka: {e}')
             return False
+        
