@@ -20,7 +20,16 @@ load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
 CORS_ORIGIN_ALLOW_ALL = True  # Разрешить доступ с любых источников
+CORS_ALLOW_ALL_ORIGINS = True  # Разрешить все источники
+CORS_ALLOW_CREDENTIALS = True  # Разрешить куки
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://vasilekretsu.ru', 
+    'https://vasilekretsu.ru',
+    'http://79.133.183.58',
+    'http://localhost',
+    'http://127.0.0.1'
+]
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -75,6 +84,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     # "api_django.middleware.JWTAuthenticationMiddleware",
 ]
 

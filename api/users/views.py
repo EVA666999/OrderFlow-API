@@ -78,12 +78,13 @@ class YandexOAuthView(APIView):
             'redirect_uri': 'http://vasilekretsu.ru/users/callback/yandex/',
         }
         
-        response = requests.post(token_url, data=token_data)
-        
-        # print("Token Response Status:", response.status_code)
-        # print("Token Response Content:", response.text)
-    
-        return response.json() if response.status_code == 200 else None
+        try:
+            response = requests.post(token_url, data=token_data)
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            print(f"OAuth Token Request Error: {e}")
+            return None
     def _get_user_info(self, access_token):
         user_info_url = 'https://login.yandex.ru/info'
         headers = {'Authorization': f'OAuth {access_token}'}
