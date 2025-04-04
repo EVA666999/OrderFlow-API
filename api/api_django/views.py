@@ -16,9 +16,8 @@ from .serializers import (
     ProductReviewSerializer,
     ProductSerializer,
 )
-from .tasks import (  # Добавляем импорт наших задач
+from .tasks import (
     send_order_confirmation_email,
-    produce_order_message,
 )
 
 logger = logging.getLogger(__name__)

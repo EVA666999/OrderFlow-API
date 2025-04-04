@@ -1,5 +1,5 @@
 import logging
-from celery import shared_task
+from celery import shared_task  # Импортируем shared_task непосредственно из celery
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
