@@ -64,6 +64,9 @@ services:
       - backend_network
     expose:
       - "5432"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    command: ["postgres", "-c", "listen_addresses=*"]
 
   redis:
     image: redis:7
@@ -121,6 +124,14 @@ services:
       - SERVICE_NAME=backend
     networks:
       - backend_network
+    command: >
+      bash -c "
+        echo 'Waiting for PostgreSQL...'
+        sleep 10
+        python manage.py migrate && 
+        python manage.py collectstatic --noinput &&
+        gunicorn api.wsgi:application --bind 0.0.0.0:8000
+      "
 
   celery_worker:
     build: ./api
@@ -135,6 +146,7 @@ services:
       - SERVICE_NAME=celery_worker
     networks:
       - backend_network
+    command: celery -A api worker --loglevel=info
 
   celery_beat:
     build: ./api
@@ -149,6 +161,7 @@ services:
       - SERVICE_NAME=celery_beat
     networks:
       - backend_network
+    command: celery -A api beat --loglevel=info
 
   nginx:
     build: ./api/nginx
