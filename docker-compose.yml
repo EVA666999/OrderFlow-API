@@ -120,9 +120,10 @@ services:
     environment:
       - SECRET_KEY=django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs
       - SERVICE_NAME=backend
-      - SECURE_SSL_REDIRECT=False
-      - SESSION_COOKIE_SECURE=False
-      - CSRF_COOKIE_SECURE=False
+      - SECURE_SSL_REDIRECT=True
+      - SESSION_COOKIE_SECURE=True
+      - CSRF_COOKIE_SECURE=True
+      - DEBUG=False
     networks:
       - backend_network
     command: >
