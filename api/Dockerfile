@@ -12,6 +12,9 @@ COPY . .
 # Создаем директории для статических и медиа файлов
 RUN mkdir -p /staticfiles /media
 
+# Исправляем проблему force_text в social_django
+RUN sed -i 's/from django.utils.encoding import force_text/from django.utils.encoding import force_str as force_text/g' /usr/local/lib/python3.9/site-packages/social_django/fields.py
+
 EXPOSE 8000
 
 CMD ["gunicorn", "api.wsgi:application", "--bind", "0.0.0.0:8000"]
