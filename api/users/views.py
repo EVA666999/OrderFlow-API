@@ -34,7 +34,7 @@ class UsersViewSet(viewsets.ReadOnlyModelViewSet):
 class UpdateUserRoleView(UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = CustomUserUpdateSerializer
-    permission_classes = [IsAdminOrAuthenticated]  # Только админы могут менять роли
+    permission_classes = [IsAdminOrAuthenticated]
 
 
 class UsersmeViewSet(viewsets.ReadOnlyModelViewSet):
