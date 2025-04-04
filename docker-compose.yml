@@ -125,19 +125,14 @@ services:
       - CSRF_COOKIE_SECURE=False
     networks:
       - backend_network
-    command: >
+    ccommand: >
       bash -c "
-        while ! nc -z db1 5432; do
-          echo 'Waiting for PostgreSQL...'
-          sleep 1
-        done
-        echo 'PostgreSQL is ready'
+        sleep 10 &&
         python manage.py makemigrations && 
         python manage.py migrate &&
         python manage.py collectstatic --noinput &&
         gunicorn api.wsgi:application --bind 0.0.0.0:8000
       "
-
   celery_worker:
     build: ./api
     volumes:
