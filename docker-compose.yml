@@ -189,7 +189,7 @@ services:
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --force-renewal; sleep 12h & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot certonly --webroot -w /var/www/certbot --agree-tos --no-eff-email --force-renewal --email eseeva228@gmail.com -d vasilekretsu.ru; sleep 12h & wait $${!}; done;'"
     restart: always
   
 networks:
