@@ -125,7 +125,7 @@ services:
       - CSRF_COOKIE_SECURE=False
     networks:
       - backend_network
-    ccommand: >
+    command: >
       bash -c "
         sleep 10 &&
         python manage.py makemigrations && 
