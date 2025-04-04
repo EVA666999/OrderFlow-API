@@ -1,0 +1,133 @@
+volumes:
+  pg_data1:
+  static_data:
+  media_data:
+  kafka_data:
+  zookeeper_data:
+
+services:
+  # PostgreSQL
+  db1:
+    image: postgres:13
+    env_file: .env
+    volumes:
+      - pg_data1:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend_network
+
+  # Redis (для Celery)
+  redis:
+    image: redis:7
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - backend_network
+
+  # Kafka (для взаимодействия через Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend_network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENER_NAME_INTERNAL: INTERNAL
+      KAFKA_LISTENER_PORT_INTERNAL: 29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
+      KAFKA_LISTENER_INTERNAL: INTERNAL
+    networks:
+      - backend_network
+
+  # Django (backend)
+  backend:
+    build: ./api
+    env_file: .env
+    volumes:
+      - static_data:/staticfiles
+      - media_data:/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db1
+      - redis
+      - kafka
+    networks:
+      - backend_network
+    command: >
+      bash -c "
+        sleep 10 &&
+        python manage.py makemigrations && 
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        gunicorn api.wsgi:application --bind 0.0.0.0:8000
+      "
+
+  # Celery Worker (для обработки задач)
+  celery_worker:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+      - kafka
+    networks:
+      - backend_network
+    command: celery -A api worker --loglevel=info
+
+  # Celery Beat (для регулярных задач)
+  celery_beat:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+      - kafka
+    networks:
+      - backend_network
+    command: celery -A api beat --loglevel=info
+
+  # Nginx для проксирования
+  nginx:
+    build: ./api/nginx
+    env_file: .env
+    volumes:
+      - static_data:/staticfiles
+      - media_data:/media
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - backend_network
+    restart: always
+
+networks:
+  backend_network:
+    driver: bridge
