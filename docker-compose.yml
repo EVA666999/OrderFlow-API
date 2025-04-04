@@ -180,11 +180,12 @@ services:
       - backend
 
   certbot:
-    image: certbot/certbot
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --no-eff-email --staging --email eseeva228@gmail.com -v
+  image: certbot/certbot
+  volumes:
+    - certbot_conf:/etc/letsencrypt
+    - certbot_www:/var/www/certbot
+  command: renew --webroot -w /var/www/certbot --agree-tos --no-eff-email
+  
 networks:
   backend_network:
     driver: bridge
