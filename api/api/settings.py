@@ -109,28 +109,8 @@ TEMPLATES = [
 WSGI_APPLICATION = "api.wsgi.application"
 ASGI_APPLICATION = "api.asgi.application"  # Замените на название вашего проекта
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("orderflow-api-redis-1", 6379)],
-#             # Подключение к контейнеру Redis в Docker если docker redis/localhost  "hosts": [("localhost", 6379)],  # Подключение к контейнеру Redis в Docker если docker redis/localhost
-#         },
-#     },
-# }
-
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://orderflow-api-redis-1:6379/1",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         },
-#     }
-# }
 
 
-# local
 # CACHES = {
 #     "default": {
 #         "BACKEND": "django_redis.cache.RedisCache",
@@ -306,18 +286,41 @@ SOCIAL_AUTH_AUTHENTICATION_BACKENDS = (
 )
 
 # Настройки Redis для локального использования
-REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')  # Имя сервиса из docker-compose
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
 
-# Настройки Celery для локального использования
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(REDIS_HOST, int(REDIS_PORT))],  # Подключение по имени сервиса
+        },
+    },
+}
+
+# Настройки для кэша
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/1",  # Подключение по имени сервиса
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+# Настройки Celery для использования в контейнерах
 CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 CELERY_RESULT_BACKEND = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
-CELERY_WORKER_POOL = 'solo'  # Использовать пул solo для Windows
+# Убираем CELERY_WORKER_POOL = 'solo' для контейнеров на Linux
 
+# Настройки Kafka для использования в контейнерах
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')  # Имя сервиса из docker-compose
+KAFKA_CONSUMER_GROUP_ID = 'django_consumer'
 CELERY_BEAT_SCHEDULE = {
     'update-cache-every-10-minutes': {
         'task': 'api_django.tasks.update_cache_periodically',
@@ -334,27 +337,3 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-# Настройки Kafka для локального использования
-KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
-KAFKA_CONSUMER_GROUP_ID = 'django_consumer'
-
-
-# Настройки Redis для кэша и каналов
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("localhost", 6379)],  # Подключение к локальному Redis
-        },
-    },
-}
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://localhost:6379/1",  # для локального подключения
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-    }
-}

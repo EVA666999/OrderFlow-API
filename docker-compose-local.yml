@@ -54,10 +54,8 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_LISTENER_NAME_INTERNAL: INTERNAL
-      KAFKA_LISTENER_PORT_INTERNAL: 29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL: PLAINTEXT
-      KAFKA_LISTENER_INTERNAL: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks:
       - backend_network
 
@@ -68,6 +66,7 @@ services:
     volumes:
       - static_data:/staticfiles
       - media_data:/media
+      - ./api:/app
     ports:
       - "8000:8000"
     depends_on:
@@ -115,9 +114,9 @@ services:
 
   # Nginx для проксирования
   nginx:
-    build: ./api/nginx
-    env_file: .env
+    image: nginx:1.22.1
     volumes:
+      - ./api/nginx/nginx.local.conf:/etc/nginx/conf.d/default.conf
       - static_data:/staticfiles
       - media_data:/media
     ports:
