@@ -55,7 +55,7 @@ volumes:
   certbot_www:
 
 services:
-  db:
+  db1:
     image: postgres:13
     env_file: .env
     volumes:
