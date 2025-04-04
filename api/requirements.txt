@@ -5,7 +5,7 @@ djangorestframework-simplejwt==4.7.2
 psycopg2-binary==2.9.10
 
 # Изменяем версию social-auth-app-django с 5.2.0 на 4.0.0
-social-auth-app-django==4.0.0
+social-auth-app-django==5.0.0
 
 channels
 daphne
