@@ -1,4 +1,4 @@
-Django>=3.2.18,<5.0
+Django>=3.2
 djangorestframework==3.12.4
 djoser==2.1.0
 djangorestframework-simplejwt==4.7.2
