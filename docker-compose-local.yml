@@ -29,6 +29,11 @@ services:
   # Kafka (для взаимодействия через Kafka)
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
+    command: >
+      bash -c "
+        rm -rf /var/lib/zookeeper/data/* || true;
+        /etc/confluent/docker/run
+      "
     hostname: zookeeper
     container_name: zookeeper
     volumes:
@@ -41,6 +46,11 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
+    command: >
+      bash -c "
+        rm -rf /var/lib/kafka/data/* || true;
+        /etc/confluent/docker/run
+      "
     hostname: kafka
     container_name: kafka
     depends_on:

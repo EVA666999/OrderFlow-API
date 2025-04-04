@@ -1,9 +1,12 @@
+import json
 from celery import shared_task
 import subprocess
 import os
 from datetime import datetime
 from django.conf import settings
 import logging
+
+from kafka import KafkaConsumer
 
 logger = logging.getLogger(__name__)
 
@@ -60,3 +63,36 @@ def backup_database():
     except Exception as e:
         logger.error(f"Error during database backup: {str(e)}")
         return False
+    
+@shared_task
+def process_kafka_messages(topic, num_messages=50):
+    try:
+        consumer = KafkaConsumer(
+            topic,
+            bootstrap_servers=['kafka:9092'],
+            auto_offset_reset='earliest',
+            group_id='django_consumer',
+            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+        )
+        
+        messages = []
+        for _ in range(num_messages):
+            msg = next(consumer, None)
+            if msg is None:
+                break
+            messages.append(msg.value)
+            
+        consumer.close()
+        
+        if messages:
+            # Обработка полученных сообщений
+            # Например, сохранение в базу данных
+            return f"Processed {len(messages)} messages from Kafka topic '{topic}'"
+        return f"No messages found in Kafka topic '{topic}'"
+    except Exception as e:
+        return f"Error processing Kafka messages: {str(e)}"
+
+@shared_task
+def update_cache_periodically():
+    # Ваш код для обновления кэша
+    return "Cache updated successfully"

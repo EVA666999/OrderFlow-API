@@ -236,10 +236,9 @@ EMAIL_HOST_PASSWORD = os.getenv(
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
+# Удалите оба существующих определения STATIC_ROOT и используйте:
 STATIC_URL = "/static/"
-
-# Для сборки статических файлов
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = "/staticfiles"  # Должен соответствовать точке монтирования тома Dockerc"
 
 SWAGGER_SETTINGS = {
     "SECURITY_DEFINITIONS": {
