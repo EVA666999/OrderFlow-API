@@ -122,6 +122,10 @@ services:
     environment:
       - SECRET_KEY=django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs
       - SERVICE_NAME=backend
+      - SECURE_SSL_REDIRECT=True
+      - SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
+      - SESSION_COOKIE_SECURE=True
+      - CSRF_COOKIE_SECURE=True
     networks:
       - backend_network
     command: >
@@ -178,13 +182,15 @@ services:
       - backend_network
     depends_on:
       - backend
+    restart: always
 
   certbot:
     image: certbot/certbot
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: renew --webroot -w /var/www/certbot --agree-tos --no-eff-email
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --force-renewal; sleep 12h & wait $${!}; done;'"
+    restart: always
   
 networks:
   backend_network:
