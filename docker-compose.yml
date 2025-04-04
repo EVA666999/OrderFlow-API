@@ -99,7 +99,7 @@ services:
       - static_data:/staticfiles
       - media_data:/media
     depends_on:
-      - db
+      - db1
       - redis
       - kafka
     networks:
