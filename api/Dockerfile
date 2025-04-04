@@ -2,6 +2,15 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Обновляем ключи и устанавливаем PostgreSQL клиент
+RUN apt-get update -y && \
+    apt-get install -y gnupg2 apt-transport-https ca-certificates && \
+    apt-get clean && \
+    apt-key update && \
+    apt-get update -y && \
+    apt-get install -y postgresql-client && \
+    apt-get clean
+
 # Устанавливаем зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -13,7 +22,6 @@ COPY . .
 # Создаем директории для статических и медиа файлов
 RUN mkdir -p /staticfiles /media
 
-RUN apt-get update && apt-get install -y postgresql-client && apt-get clean
 # Исправляем проблему force_text в social_django
 RUN sed -i 's/from django.utils.encoding import force_text/from django.utils.encoding import force_str as force_text/g' /usr/local/lib/python3.9/site-packages/social_django/fields.py
 
