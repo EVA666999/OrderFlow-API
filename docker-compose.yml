@@ -180,11 +180,11 @@ services:
       - backend
 
   certbot:
-  image: certbot/certbot
-  volumes:
-    - certbot_conf:/etc/letsencrypt
-    - certbot_www:/var/www/certbot
-  command: renew --webroot -w /var/www/certbot --agree-tos --no-eff-email
+    image: certbot/certbot
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    command: renew --webroot -w /var/www/certbot --agree-tos --no-eff-email
   
 networks:
   backend_network:
