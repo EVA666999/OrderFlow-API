@@ -1,6 +1,6 @@
 from celery import shared_task
 from kafka.producers import KafkaProducer
-from api.api_django.models import Order  # Измените путь импорта на правильный
+from api_django.models import Order
 
 @shared_task
 def produce_order_message(order_id):
