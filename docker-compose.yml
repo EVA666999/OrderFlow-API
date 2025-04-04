@@ -179,12 +179,12 @@ services:
     depends_on:
       - backend
 
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --no-eff-email --force-renewal --email eseeva228@gmail.com -v
+  # certbot:
+  #   image: certbot/certbot
+  #   volumes:
+  #     - certbot_conf:/etc/letsencrypt
+  #     - certbot_www:/var/www/certbot
+  #   command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --no-eff-email --force-renewal --email eseeva228@gmail.com -v
 
 networks:
   backend_network:
