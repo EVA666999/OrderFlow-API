@@ -81,50 +81,84 @@ class CustomUserUpdateSerializer(serializers.ModelSerializer):
             if field != "password":  # Не обновляем пароль
                 setattr(instance, field, value)
 
-        # Теперь нужно обработать обновление данных для связанных моделей, например, для Employee, Supplier, Customer
+        # Обработка данных для разных ролей
         if instance.role == User.EMPLOYEE:
+            # Создаем объект Employee, если его нет
+            try:
+                employee = instance.employee
+            except Employee.DoesNotExist:
+                employee = Employee.objects.create(
+                    user=instance, 
+                    first_name=instance.first_name or '', 
+                    last_name=instance.last_name or ''
+                )
+
             # Обновление данных Employee
             employee_data = {
-                "first_name": validated_data.get("first_name"),
-                "last_name": validated_data.get("last_name"),
+                "first_name": validated_data.get("first_name", employee.first_name),
+                "last_name": validated_data.get("last_name", employee.last_name),
                 "phone": validated_data.get("phone"),
                 "salary": validated_data.get("salary"),
             }
-            employee = instance.employee  # Получаем связанную модель Employee
+            
             for key, value in employee_data.items():
-                if value:
+                if value is not None:
                     setattr(employee, key, value)
             employee.save()
 
-        elif instance.role == User.SUPPLIER:
-            # Обновление данных Supplier
-            supplier_data = {
-                "name": validated_data.get("name"),
-                "contact_name": validated_data.get("contact_name"),
-                "contact_phone": validated_data.get("contact_phone"),
-                "address": validated_data.get("address"),
-            }
-            supplier = instance.supplier  # Получаем связанную модель Supplier
-            for key, value in supplier_data.items():
-                if value:
-                    setattr(supplier, key, value)
-            supplier.save()
-
         elif instance.role == User.CUSTOMER:
+            # Создаем объект Customer, если его нет
+            try:
+                customer = instance.customer
+            except Customer.DoesNotExist:
+                customer = Customer.objects.create(
+                    user=instance,
+                    phone_number='',
+                    address='',
+                    contact_name=instance.username,
+                    company_name='',
+                    country=''
+                )
+
             # Обновление данных Customer
             customer_data = {
-                "phone_number": validated_data.get("phone_number"),
-                "address": validated_data.get("address"),
-                "contact_name": validated_data.get("contact_name"),
-                "company_name": validated_data.get("company_name"),
-                "country": validated_data.get("country"),
+                "phone_number": validated_data.get("phone_number", customer.phone_number),
+                "address": validated_data.get("address", customer.address),
+                "contact_name": validated_data.get("contact_name", customer.contact_name),
+                "company_name": validated_data.get("company_name", customer.company_name),
+                "country": validated_data.get("country", customer.country),
             }
-            print(customer_data)
-            customer = instance.customer  # Получаем связанную модель Customer
+            
             for key, value in customer_data.items():
-                if value:
+                if value is not None:
                     setattr(customer, key, value)
             customer.save()
+
+        elif instance.role == User.SUPPLIER:
+            # Создаем объект Supplier, если его нет
+            try:
+                supplier = instance.supplier
+            except Supplier.DoesNotExist:
+                supplier = Supplier.objects.create(
+                    user=instance,
+                    name=instance.username,
+                    contact_name=instance.username,
+                    contact_phone='',
+                    address=''
+                )
+
+            # Обновление данных Supplier
+            supplier_data = {
+                "name": validated_data.get("name", supplier.name),
+                "contact_name": validated_data.get("contact_name", supplier.contact_name),
+                "contact_phone": validated_data.get("contact_phone", supplier.contact_phone),
+                "address": validated_data.get("address", supplier.address),
+            }
+            
+            for key, value in supplier_data.items():
+                if value is not None:
+                    setattr(supplier, key, value)
+            supplier.save()
 
         instance.save()  # Сохраняем пользователя после изменений
         return instance
