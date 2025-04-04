@@ -2,39 +2,37 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# Update and install dependencies with proper key handling
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
-    gnupg2 \
-    apt-transport-https \
-    ca-certificates \
-    wget \
-    lsb-release && \
-    # Update keyring properly
-    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \
-    echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
-    apt-get update -y && \
-    apt-get install -y postgresql-client && \
+# Обновляем и устанавливаем зависимости, используя более надёжный метод
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get update -y --allow-insecure-repositories && \
+    apt-get install -y --allow-unauthenticated gnupg2 apt-transport-https ca-certificates && \
+    mkdir -p /etc/apt/keyrings && \
+    apt-get install -y --allow-unauthenticated wget && \
+    sh -c 'wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg' && \
+    sh -c 'echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt/ bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list' && \
+    apt-get update -y --allow-insecure-repositories && \
+    apt-get install -y --allow-unauthenticated postgresql-client && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Устанавливаем зависимости Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Копируем файлы проекта
 COPY . .
 
-# Create directories for static and media files
+# Создаем директории для статических и медиа файлов
 RUN mkdir -p /staticfiles /media
 
-# Fix social_django compatibility issue
+# Исправляем проблему с force_text в social_django
 RUN sed -i 's/from django.utils.encoding import force_text/from django.utils.encoding import force_str as force_text/g' /usr/local/lib/python3.9/site-packages/social_django/fields.py
 
 EXPOSE 8000
 
-# Run migrations and start the application
+# Запускаем миграции и приложение
 CMD python manage.py migrate && \
     python manage.py collectstatic --noinput && \
     gunicorn api.wsgi:application --bind 0.0.0.0:8000
