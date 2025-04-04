@@ -46,31 +46,39 @@
 version: "3.2"
 
 volumes:
-  pg_data:
+  pg_data1:
   static_data:
   media_data:
-  kafka_data:
-  zookeeper_data:
   certbot_conf:
   certbot_www:
+  kafka_data:
+  zookeeper_data:
 
 services:
   db1:
     image: postgres:13
     env_file: .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data1:/var/lib/postgresql/data
     networks:
       - backend_network
+    expose:
+      - "5432"
 
   redis:
     image: redis:7
     restart: always
     networks:
       - backend_network
+    expose:
+      - "6379"
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
+    hostname: zookeeper
+    container_name: zookeeper
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -79,8 +87,14 @@ services:
     
   kafka:
     image: confluentinc/cp-kafka:7.3.0
+    hostname: kafka
+    container_name: kafka
     depends_on:
       - zookeeper
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
@@ -102,39 +116,44 @@ services:
       - db1
       - redis
       - kafka
+    environment:
+      - SECRET_KEY=django-insecure-1(ny8xf!hmj6&v0kte#a!d--i&ybk7_10zd+qif!_(+d22*lhs
+      - SERVICE_NAME=backend
     networks:
       - backend_network
-    command: >
-      bash -c "python manage.py migrate && 
-               python manage.py collectstatic --noinput &&
-               gunicorn api.wsgi:application --bind 0.0.0.0:8000"
 
   celery_worker:
     build: ./api
+    volumes:
+      - ./api:/app
     env_file: .env
     depends_on:
       - backend
       - redis
       - kafka
+    environment:
+      - SERVICE_NAME=celery_worker
     networks:
       - backend_network
-    command: celery -A api worker --loglevel=info
 
   celery_beat:
     build: ./api
+    volumes:
+      - ./api:/app
     env_file: .env
     depends_on:
       - backend
       - redis
       - celery_worker
+    environment:
+      - SERVICE_NAME=celery_beat
     networks:
       - backend_network
-    command: celery -A api beat --loglevel=info
 
   nginx:
-    image: nginx:1.22.1
+    build: ./api/nginx
+    env_file: .env
     volumes:
-      - ./api/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - static_data:/staticfiles
       - media_data:/media
       - certbot_conf:/etc/letsencrypt
@@ -152,7 +171,7 @@ services:
     volumes:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --email eseeva228@gmail.com --force-renewal
+    command: certonly --webroot -w /var/www/certbot -d vasilekretsu.ru --agree-tos --no-eff-email --force-renewal --email eseeva228@gmail.com -v
 
 networks:
   backend_network:
