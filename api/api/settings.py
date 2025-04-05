@@ -318,7 +318,7 @@ CELERY_TIMEZONE = 'UTC'
 # Убираем CELERY_WORKER_POOL = 'solo' для контейнеров на Linux
 
 # Настройки Kafka для использования в контейнерах
-KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')  # Имя сервиса из docker-compose
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
 KAFKA_CONSUMER_GROUP_ID = 'django_consumer'
 CELERY_BEAT_SCHEDULE = {
     'update-cache-every-10-minutes': {
@@ -336,3 +336,4 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')

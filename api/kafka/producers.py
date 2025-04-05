@@ -10,31 +10,25 @@ logger = logging.getLogger(__name__)
 
 def send_message_to_kafka(topic, data):
     try:
-        # Создаем Producer с дополнительной конфигурацией
+        # Логируем хост и параметры
+        logger.info(f"Kafka Bootstrap Servers: {settings.KAFKA_BOOTSTRAP_SERVERS}")
+        print(f"Kafka Bootstrap Servers: {settings.KAFKA_BOOTSTRAP_SERVERS}")
+        
         producer = Producer({
             'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
             'client.id': 'django-producer',
-            # Добавляем конфигурацию для надежности
             'retries': 3,
             'retry.backoff.ms': 300,
-            'acks': 'all'  # Настройка с максимальным подтверждением
+            'acks': 'all'
         })
         
-        # Используем callback для подтверждения отправки сообщения
-        def delivery_report(err, msg):
-            if err is not None:
-                logger.error(f'Ошибка доставки сообщения: {err}')
-            else:
-                logger.info(f'Сообщение доставлено в топик {msg.topic()} [{msg.partition()}]')
-        
-        # Сериализуем данные и отправляем сообщение
         message = json.dumps(data).encode('utf-8')
-        producer.produce(topic, message, callback=delivery_report)
-        
-        # Гарантируем отправку сообщений
+        producer.produce(topic, message)
         producer.flush(timeout=10)
         
+        logger.info(f"Message sent to topic {topic}")
         return True
     except Exception as e:
-        logger.error(f"Полная ошибка отправки в Kafka: {e}", exc_info=True)
+        logger.error(f"Kafka send error: {e}", exc_info=True)
+        print(f"Kafka send error: {e}")
         return False

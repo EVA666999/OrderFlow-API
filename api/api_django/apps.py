@@ -25,3 +25,15 @@ class ApiDjangoConfig(AppConfig):
             logger.info("Kafka топики инициализированы")
         except Exception as e:
             logger.error(f"Ошибка при инициализации Kafka топиков: {e}")
+
+
+    def ready(self):
+        try:
+            from kafka.utils import ensure_kafka_topics
+            # Создаем топик "orders" при запуске приложения
+            result = ensure_kafka_topics(['orders'])
+            print(f"Kafka topics initialization result: {result}")
+            logger.info("Kafka топики инициализированы")
+        except Exception as e:
+            print(f"Ошибка при инициализации Kafka топиков: {e}")
+            logger.error(f"Ошибка при инициализации Kafka топиков: {e}")

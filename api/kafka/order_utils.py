@@ -23,9 +23,16 @@ def produce_order_message(order_id):
             ],
         }
         
-        # Используем функцию вместо класса
-        return send_message_to_kafka(topic='orders', data=order_data)
-    except Order.DoesNotExist:
-        return False
+        # Добавьте подробное логирование
+        print(f"Preparing to send order {order_id} to Kafka")
+        print(f"Order data: {order_data}")
+        
+        # Используем функцию отправки с логированием
+        success = send_message_to_kafka('orders', order_data)
+        
+        print(f"Message send result: {success}")
+        
+        return success
     except Exception as e:
+        print(f"Error in produce_order_message: {e}")
         return False
