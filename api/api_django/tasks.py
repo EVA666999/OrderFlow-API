@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 
-from kafka.consumers import KafkaConsumer
+from kafka.consumers import get_messages_from_kafka
 from .models import Order, Product, Category
 
 logger = logging.getLogger(__name__)
@@ -70,24 +70,11 @@ def update_cache_periodically():
 @shared_task
 def process_kafka_messages(topic, num_messages=50):
     try:
-        consumer = KafkaConsumer(
-            topic,
-            bootstrap_servers=['kafka:9092'],
-            auto_offset_reset='earliest',
-            group_id='django_consumer',
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
-        )
+        # Используем функцию get_messages_from_kafka вместо прямого использования KafkaConsumer
+        from kafka.consumers import get_messages_from_kafka
         
-        messages = []
-        message_count = 0
-        # Используем timeout, чтобы не зависать, если сообщений меньше
-        for msg in consumer:
-            messages.append(msg.value)
-            message_count += 1
-            if message_count >= num_messages:
-                break
-                
-        consumer.close()
+        # Получаем сообщения
+        messages = get_messages_from_kafka(topic, num_messages)
         
         if messages:
             # Обработка полученных сообщений

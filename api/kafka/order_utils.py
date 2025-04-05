@@ -1,17 +1,12 @@
 from celery import shared_task
-from kafka.producers import KafkaProducer
+from kafka.producers import send_message_to_kafka
 from api_django.models import Order
 
 @shared_task
 def produce_order_message(order_id):
-    """
-    Celery-задача для отправки данных заказа в Kafka
-    """
-    # Получаем заказ из базы данных
     try:
         order = Order.objects.get(id=order_id)
         
-        # Преобразуем заказ в словарь для отправки
         order_data = {
             'id': order.id,
             'user_id': order.user.id,
@@ -28,9 +23,8 @@ def produce_order_message(order_id):
             ],
         }
         
-        # Отправляем сообщение в Kafka
-        producer = KafkaProducer()
-        return producer.produce_message(topic='orders', message_data=order_data)
+        # Используем функцию вместо класса
+        return send_message_to_kafka(topic='orders', data=order_data)
     except Order.DoesNotExist:
         return False
     except Exception as e:

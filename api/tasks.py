@@ -1,98 +1,87 @@
 import json
 from celery import shared_task
-import subprocess
-import os
-from datetime import datetime
-from django.conf import settings
 import logging
-
-from kafka.consumer import KafkaConsumer
+from django.conf import settings
+from kafka.consumers import get_messages_from_kafka
+from kafka.producers import send_message_to_kafka
 
 logger = logging.getLogger(__name__)
 
 @shared_task
-def backup_database():
+def process_kafka_messages(topic, num_messages=10):
     """
-    Периодическая задача для резервного копирования базы данных
+    Задача Celery для получения и обработки сообщений из Kafka
     """
     try:
-        # Получаем переменные окружения из settings
-        db_name = settings.DATABASES['default']['NAME']
-        db_user = settings.DATABASES['default']['USER']
-        db_host = settings.DATABASES['default']['HOST'] or 'localhost'
-        db_port = settings.DATABASES['default']['PORT'] or '5432'
-        
-        # Создаем директорию для бэкапов, если её нет
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        
-        # Формируем имя файла с текущей датой
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        backup_file = os.path.join(backup_dir, f'backup_{db_name}_{timestamp}.sql')
-        
-        # Команда для создания дампа PostgreSQL
-        command = [
-            'pg_dump',
-            f'--host={db_host}',
-            f'--port={db_port}',
-            f'--username={db_user}',
-            '--format=custom',
-            f'--file={backup_file}',
-            db_name
-        ]
-        
-        # Запускаем процесс
-        process = subprocess.Popen(
-            command,
-            env=dict(os.environ, PGPASSWORD=settings.DATABASES['default']['PASSWORD']),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        
-        stdout, stderr = process.communicate()
-        
-        # Проверяем результат
-        if process.returncode != 0:
-            error_msg = stderr.decode('utf-8')
-            logger.error(f"Backup failed: {error_msg}")
-            return False
-        
-        logger.info(f"Database backup successfully created: {backup_file}")
-        return True
-    
-    except Exception as e:
-        logger.error(f"Error during database backup: {str(e)}")
-        return False
-    
-@shared_task
-def process_kafka_messages(topic, num_messages=50):
-    try:
-        consumer = KafkaConsumer(
-        topic,
-        bootstrap_servers='kafka:9092',
-        auto_offset_reset='earliest',
-        group_id='django_consumer',
-        value_deserializer=lambda m: json.loads(m.decode('utf-8'))
-    )
-        
-        messages = []
-        for _ in range(num_messages):
-            msg = next(consumer, None)
-            if msg is None:
-                break
-            messages.append(msg.value)
-            
-        consumer.close()
+        # Получаем сообщения из Kafka
+        messages = get_messages_from_kafka(topic, num_messages)
         
         if messages:
-            # Обработка полученных сообщений
-            # Например, сохранение в базу данных
-            return f"Processed {len(messages)} messages from Kafka topic '{topic}'"
-        return f"No messages found in Kafka topic '{topic}'"
+            logger.info(f"Получено {len(messages)} сообщений из топика '{topic}'")
+            # Здесь можно добавить код для обработки сообщений
+            # Например, сохранить их в базу данных
+            
+            return f"Обработано {len(messages)} сообщений из топика '{topic}'"
+        return f"Сообщения не найдены в топике '{topic}'"
+    
     except Exception as e:
-        return f"Error processing Kafka messages: {str(e)}"
+        logger.error(f"Ошибка обработки сообщений: {str(e)}")
+        return f"Ошибка обработки сообщений: {str(e)}"
+
 
 @shared_task
-def update_cache_periodically():
-    # Ваш код для обновления кэша
-    return "Cache updated successfully"
+def send_message_to_kafka_task(topic, data):
+    """
+    Задача Celery для отправки сообщения в Kafka
+    """
+    try:
+        success = send_message_to_kafka(topic, data)
+        if success:
+            return f"Сообщение успешно отправлено в топик '{topic}'"
+        return f"Не удалось отправить сообщение в топик '{topic}'"
+    
+    except Exception as e:
+        logger.error(f"Ошибка отправки сообщения: {str(e)}")
+        return f"Ошибка отправки сообщения: {str(e)}"
+
+
+@shared_task
+def send_order_to_kafka(order_id):
+    """
+    Задача Celery для отправки заказа в Kafka
+    """
+    from api_django.models import Order
+    
+    try:
+        # Получаем заказ из БД
+        order = Order.objects.get(id=order_id)
+        
+        # Подготавливаем данные заказа
+        order_data = {
+            'id': order.id,
+            'user_id': order.user.id,
+            'total_price': float(order.total_price),
+            'created_at': order.pub_date.isoformat() if hasattr(order, 'pub_date') else None,
+            'products': [
+                {
+                    'product_id': order_product.product.id,
+                    'name': order_product.product.name,
+                    'quantity': order_product.quantity,
+                    'price': float(order_product.product.price),
+                }
+                for order_product in order.orderproduct_set.all()
+            ],
+        }
+        
+        # Отправляем в Kafka
+        success = send_message_to_kafka('orders', order_data)
+        
+        if success:
+            return f"Заказ №{order_id} отправлен в Kafka"
+        return f"Ошибка отправки заказа №{order_id} в Kafka"
+        
+    except Order.DoesNotExist:
+        return f"Заказ №{order_id} не найден"
+    except Exception as e:
+        logger.error(f"Ошибка отправки заказа в Kafka: {str(e)}")
+        return f"Ошибка отправки заказа в Kafka: {str(e)}"

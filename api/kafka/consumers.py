@@ -1,64 +1,57 @@
-"""Потребители (Consumers) — получают сообщения из топиков.
-
-KafkaConsumer в файле consumers.py получает сообщения из Kafka."""
+"""Простой Consumer для получения сообщений из Kafka"""
 
 import json
 import logging
-from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import Consumer
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-class KafkaConsumer:
-    def __init__(self, topics, group_id=None):
-        """
-        Инициализирует Kafka Consumer
-        
-        Args:
-            topics (list): Список топиков для подписки
-            group_id (str, optional): ID группы потребителя
-        """
-        if group_id is None:
-            group_id = settings.KAFKA_CONSUMER_GROUP_ID
-            
-        self.topics = topics if isinstance(topics, list) else [topics]
-        
-        self.consumer_config = {
+def get_messages_from_kafka(topic, max_messages=10):
+    """
+    Простая функция для получения сообщений из Kafka
+    
+    Args:
+        topic: Имя топика
+        max_messages: Максимальное количество сообщений для получения
+    
+    Returns:
+        list: Список полученных сообщений
+    """
+    try:
+        # Настройка Consumer
+        consumer = Consumer({
             'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
-            'group.id': group_id,
+            'group.id': 'django_consumer',
             'auto.offset.reset': 'earliest'
-        }
+        })
         
-        self.consumer = Consumer(self.consumer_config)
-        self.consumer.subscribe(self.topics)
+        # Подписываемся на топик
+        consumer.subscribe([topic])
         
-    def consume_messages(self, num_messages=1, timeout=1.0):
-        """
-        Получает сообщения из Kafka
-        """
+        # Получаем сообщения
         messages = []
-        
-        try:
-            for _ in range(num_messages):
-                msg = self.consumer.poll(timeout=timeout)
+        for _ in range(max_messages):
+            msg = consumer.poll(timeout=1.0)
+            if msg is None:
+                continue
+            
+            if msg.error():
+                logger.error(f"Ошибка получения сообщения: {msg.error()}")
+                continue
                 
-                if msg is None or msg.error():
-                    continue
-                    
-                try:
-                    message_value = json.loads(msg.value().decode('utf-8'))
-                    messages.append(message_value)
-                except Exception as e:
-                    logger.error(f'Error decoding message: {e}')
-            
-            return messages
-            
-        except Exception as e:
-            logger.error(f'Error consuming messages from Kafka: {e}')
-            return []
+            # Десериализуем сообщение
+            try:
+                value = json.loads(msg.value().decode('utf-8'))
+                messages.append(value)
+            except Exception as e:
+                logger.error(f"Ошибка разбора сообщения: {e}")
         
-    def close(self):
-        """
-        Закрывает потребителя Kafka
-        """
-        self.consumer.close()
+        # Закрываем consumer
+        consumer.close()
+        
+        return messages
+        
+    except Exception as e:
+        logger.error(f"Ошибка при получении сообщений из Kafka: {e}")
+        return []
