@@ -1,3 +1,7 @@
+"""Потребители (Consumers) — получают сообщения из топиков.
+
+KafkaConsumer в файле consumers.py получает сообщения из Kafka."""
+
 import json
 import logging
 from confluent_kafka import Consumer, KafkaError

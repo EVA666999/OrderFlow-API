@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 
-from kafka import KafkaConsumer
+from kafka.consumers import KafkaConsumer
 from .models import Order, Product, Category
 
 logger = logging.getLogger(__name__)

@@ -1,3 +1,8 @@
+"""Производители (Producers) — отправляют сообщения в топики.
+
+KafkaProducer в файле producers.py отвечает за отправку сообщений в Kafka."""
+
+
 import json
 import logging
 from confluent_kafka import Producer
