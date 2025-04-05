@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 import logging
 
-from kafka import KafkaConsumer
+from kafka.consumer import KafkaConsumer
 
 logger = logging.getLogger(__name__)
 
@@ -68,12 +68,12 @@ def backup_database():
 def process_kafka_messages(topic, num_messages=50):
     try:
         consumer = KafkaConsumer(
-            topic,
-            bootstrap_servers=['kafka:9092'],
-            auto_offset_reset='earliest',
-            group_id='django_consumer',
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
-        )
+        topic,
+        bootstrap_servers='kafka:9092',
+        auto_offset_reset='earliest',
+        group_id='django_consumer',
+        value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+    )
         
         messages = []
         for _ in range(num_messages):
