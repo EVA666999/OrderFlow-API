@@ -2,6 +2,7 @@ import json
 from celery import shared_task
 import logging
 from django.conf import settings
+from api.api_django.models import Order
 from kafka.consumers import get_messages_from_kafka
 from kafka.producers import send_message_to_kafka
 
@@ -47,16 +48,13 @@ def send_message_to_kafka_task(topic, data):
 
 @shared_task
 def send_order_to_kafka(order_id):
-    """
-    Задача Celery для отправки заказа в Kafka
-    """
-    from api_django.models import Order
-    
     try:
         # Получаем заказ из БД
         order = Order.objects.get(id=order_id)
         
-        # Подготавливаем данные заказа
+        # Подробное логирование перед отправкой
+        logger.info(f"Подготовка заказа {order_id} к отправке в Kafka")
+        
         order_data = {
             'id': order.id,
             'user_id': order.user.id,
@@ -73,15 +71,22 @@ def send_order_to_kafka(order_id):
             ],
         }
         
-        # Отправляем в Kafka
+        # Логируем данные перед отправкой
+        logger.info(f"Данные заказа: {json.dumps(order_data)}")
+        
+        # Отправляем в Kafka с подробным логированием
         success = send_message_to_kafka('orders', order_data)
         
         if success:
+            logger.info(f"Заказ №{order_id} успешно отправлен в Kafka")
             return f"Заказ №{order_id} отправлен в Kafka"
-        return f"Ошибка отправки заказа №{order_id} в Kafka"
+        else:
+            logger.error(f"Ошибка отправки заказа №{order_id} в Kafka")
+            return f"Ошибка отправки заказа №{order_id} в Kafka"
         
     except Order.DoesNotExist:
+        logger.error(f"Заказ №{order_id} не найден")
         return f"Заказ №{order_id} не найден"
     except Exception as e:
-        logger.error(f"Ошибка отправки заказа в Kafka: {str(e)}")
-        return f"Ошибка отправки заказа в Kafka: {str(e)}"
+        logger.error(f"Критическая ошибка отправки заказа в Kafka: {str(e)}", exc_info=True)
+        return f"Критическая ошибка отправки заказа в Kafka: {str(e)}"

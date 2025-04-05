@@ -9,30 +9,32 @@ logger = logging.getLogger(__name__)
 
 
 def send_message_to_kafka(topic, data):
-    """
-    Простая функция для отправки сообщения в Kafka
-    
-    Args:
-        topic: Имя топика
-        data: Словарь с данными для отправки
-    
-    Returns:
-        bool: Успешно ли отправлено сообщение
-    """
     try:
-        # Создаем Producer
-        producer = Producer({'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS})
+        # Создаем Producer с дополнительной конфигурацией
+        producer = Producer({
+            'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
+            'client.id': 'django-producer',
+            # Добавляем конфигурацию для надежности
+            'retries': 3,
+            'retry.backoff.ms': 300,
+            'acks': 'all'  # Настройка с максимальным подтверждением
+        })
         
-        # Сериализуем данные в JSON
+        # Используем callback для подтверждения отправки сообщения
+        def delivery_report(err, msg):
+            if err is not None:
+                logger.error(f'Ошибка доставки сообщения: {err}')
+            else:
+                logger.info(f'Сообщение доставлено в топик {msg.topic()} [{msg.partition()}]')
+        
+        # Сериализуем данные и отправляем сообщение
         message = json.dumps(data).encode('utf-8')
+        producer.produce(topic, message, callback=delivery_report)
         
-        # Отправляем сообщение
-        producer.produce(topic, message)
-        producer.flush()
+        # Гарантируем отправку сообщений
+        producer.flush(timeout=10)
         
-        logger.info(f"Сообщение отправлено в топик {topic}")
         return True
-    
     except Exception as e:
-        logger.error(f"Ошибка отправки сообщения: {e}")
+        logger.error(f"Полная ошибка отправки в Kafka: {e}", exc_info=True)
         return False
