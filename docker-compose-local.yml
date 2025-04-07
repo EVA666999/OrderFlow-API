@@ -26,53 +26,6 @@ services:
     networks:
       - backend_network
 
-  # Kafka (для взаимодействия через Kafka)
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
-    command: >
-      bash -c "
-        rm -rf /var/lib/zookeeper/data/* || true;
-        /etc/confluent/docker/run
-      "
-    hostname: zookeeper
-    container_name: zookeeper
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - backend_network
-
-  kafka:
-    image: confluentinc/cp-kafka:7.3.0
-    command: >
-      bash -c "
-        rm -rf /var/lib/kafka/data/* || true;
-        /etc/confluent/docker/run
-      "
-    hostname: kafka
-    container_name: kafka
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-    healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-    networks:
-      - backend_network
 
   # Django (backend)
   backend:
@@ -87,7 +40,6 @@ services:
     depends_on:
       - db1
       - redis
-      - kafka
     networks:
       - backend_network
     command: >
@@ -108,7 +60,6 @@ services:
     depends_on:
       - backend
       - redis
-      - kafka
     networks:
       - backend_network
     command: celery -A api worker --loglevel=info
@@ -122,7 +73,6 @@ services:
     depends_on:
       - backend
       - redis
-      - kafka
     networks:
       - backend_network
     command: celery -A api beat --loglevel=info

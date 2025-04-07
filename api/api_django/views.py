@@ -6,7 +6,6 @@ from django.core.cache import cache
 from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from kafka.order_utils import produce_order_message  # используйте уже существующую задачу
 
 from .models import Category, Discount, Order, Product, ProductReview
 from .permissions import IsAdminOrCustomer, IsAdminOrEmployee, IsAdminOrSupplier
@@ -52,8 +51,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         # Ставим задачу на отправку email через Celery
         send_order_confirmation_email.delay(order.id)
         
-        # Ставим задачу на отправку сообщения в Kafka
-        produce_order_message.delay(order.id)
 
         # Получаем канал
         channel_layer = get_channel_layer()
