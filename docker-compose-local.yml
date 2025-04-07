@@ -2,7 +2,6 @@ volumes:
   pg_data1:
   static_data:
   media_data:
-  kafka_data:
   zookeeper_data:
 
 services:

@@ -317,9 +317,6 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 # Убираем CELERY_WORKER_POOL = 'solo' для контейнеров на Linux
 
-# Настройки Kafka для использования в контейнерах
-KAFKA_BOOTSTRAP_SERVERS = os.environ.get('KAFKA_BOOTSTRAP_SERVERS', 'kafka:9092')
-KAFKA_CONSUMER_GROUP_ID = 'django_consumer'
 CELERY_BEAT_SCHEDULE = {
     'update-cache-every-10-minutes': {
         'task': 'api_django.tasks.update_cache_periodically',
