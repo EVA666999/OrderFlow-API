@@ -16,12 +16,10 @@ UTC = timezone.utc
 
 ALLOWED_HOSTS = [
     "vasilekretsu.ru",  
-    "www.vasilekretsu.ru",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
     'http://vasilekretsu.ru',  
-    'http://www.vasilekretsu.ru',
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
