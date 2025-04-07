@@ -4,8 +4,6 @@ volumes:
   pg_data1:
   static_data:
   media_data:
-  certbot_data:
-  certbot_www:
 
 services:
   db1:
@@ -14,7 +12,7 @@ services:
     volumes:
       - pg_data1:/var/lib/postgresql/data
     networks:
-      - backend_network
+      - backend_network  
     expose:
       - "5432"
     environment:
@@ -30,8 +28,6 @@ services:
     expose:
       - "6379"
 
-  # Kafka и Zookeeper удалены
-
   backend:
     build: ./api
     env_file: .env
@@ -41,18 +37,13 @@ services:
     depends_on:
       - db1
       - redis
-    environment:
-      - DEBUG=False
-      - SECURE_SSL_REDIRECT=True
-      - SESSION_COOKIE_SECURE=True
-      - CSRF_COOKIE_SECURE=True
     networks:
       - backend_network
     command: >
       bash -c "
-        sleep 10 &&
-        python manage.py makemigrations && 
-        python manage.py migrate &&
+        sleep 10 && 
+        python manage.py makemigrations &&
+        python manage.py migrate && 
         python manage.py collectstatic --noinput &&
         gunicorn api.wsgi:application --bind 0.0.0.0:8000
       "
@@ -61,7 +52,7 @@ services:
   celery_worker:
     build: ./api
     volumes:
-      - ./api:/app
+      - ./api:/app  
     env_file: .env
     depends_on:
       - backend
@@ -74,49 +65,35 @@ services:
     restart: always
 
   celery_beat:
-    build: ./api
+    build: ./api 
     volumes:
       - ./api:/app
-    env_file: .env
+    env_file: .env  
     depends_on:
       - backend
       - redis
       - celery_worker
-    environment:
+    environment:  
       - SERVICE_NAME=celery_beat
     networks:
       - backend_network
     command: celery -A api beat --loglevel=info
     restart: always
-
+      
   nginx:
     build: ./api/nginx
     env_file: .env
     volumes:
       - static_data:/staticfiles
       - media_data:/media
-      - certbot_data:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80"  
     networks:
       - backend_network
     depends_on:
       - backend
     restart: always
-    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
-
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - certbot_data:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done;'"
-    depends_on:
-      - nginx
-    restart: always
-  
+      
 networks:
   backend_network:
     driver: bridge
