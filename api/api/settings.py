@@ -325,11 +325,6 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'api_django.tasks.update_cache_periodically',
         'schedule': 60 * 10,  # каждые 10 минут
     },
-    'process-kafka-messages-every-minute': {
-        'task': 'api_django.tasks.process_kafka_messages',
-        'schedule': 60,  # каждую минуту
-        'kwargs': {'topic': 'orders', 'num_messages': 50},
-    },
     'daily-database-backup': {
         'task': 'api.tasks.backup_database',
         'schedule': crontab(hour=2, minute=0),  # каждый день в 2:00

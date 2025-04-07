@@ -1,11 +1,10 @@
 import json
 import logging
-from celery import shared_task  # Импортируем shared_task непосредственно из celery
+from celery import shared_task
 from django.core.cache import cache
 from django.core.mail import send_mail
 from django.conf import settings
 
-from kafka.consumers import get_messages_from_kafka
 from .models import Order, Product, Category
 
 logger = logging.getLogger(__name__)
@@ -66,20 +65,3 @@ def update_cache_periodically():
     except Exception as e:
         logger.error(f'Error updating cache: {e}')
         return f'Error updating cache: {e}'
-    
-@shared_task
-def process_kafka_messages(topic, num_messages=50):
-    try:
-        # Используем функцию get_messages_from_kafka вместо прямого использования KafkaConsumer
-        from kafka.consumers import get_messages_from_kafka
-        
-        # Получаем сообщения
-        messages = get_messages_from_kafka(topic, num_messages)
-        
-        if messages:
-            # Обработка полученных сообщений
-            # Например, сохранение в базу данных
-            return f"Processed {len(messages)} messages from Kafka topic '{topic}'"
-        return f"No messages found in Kafka topic '{topic}'"
-    except Exception as e:
-        return f"Error processing Kafka messages: {str(e)}"
