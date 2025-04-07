@@ -20,12 +20,14 @@ load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
 
+ALLOWED_HOSTS = [
+    "vasilekretsu.ru",
+    "www.vasilekretsu.ru",
+]
+
 CSRF_TRUSTED_ORIGINS = [
-    'http://vasilekretsu.ru', 
     'https://vasilekretsu.ru',
-    'http://79.133.183.58',
-    'http://localhost',
-    'http://127.0.0.1'
+    'https://www.vasilekretsu.ru',
 ]
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,12 +43,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "79.133.183.58",
-    "127.0.0.1",
-    "localhost",
-    "vasilekretsu.ru",
-]
+
 
 
 # Application definition
