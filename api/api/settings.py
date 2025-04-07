@@ -19,9 +19,6 @@ from dotenv import load_dotenv
 load_dotenv()  # Загружаем переменные окружения
 
 UTC = timezone.utc
-CORS_ORIGIN_ALLOW_ALL = True  # Разрешить доступ с любых источников
-CORS_ALLOW_ALL_ORIGINS = True  # Разрешить все источники
-CORS_ALLOW_CREDENTIALS = True  # Разрешить куки
 
 CSRF_TRUSTED_ORIGINS = [
     'http://vasilekretsu.ru', 
@@ -41,8 +38,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -327,3 +322,12 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=2, minute=0),  # каждый день в 2:00
     },
 }
+
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000  # Один год
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
