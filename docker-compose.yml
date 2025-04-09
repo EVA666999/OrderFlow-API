@@ -90,6 +90,7 @@ services:
     build: ./api/nginx
     volumes:
       - static_data:/staticfiles 
+      - cloudflare_certs:/etc/cloudflare
       - media_data:/media
       - ./api/cloudflare_certs:/etc/cloudflare
     ports:
