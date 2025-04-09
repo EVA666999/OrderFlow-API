@@ -13,14 +13,14 @@ def create_payment(order):
     Создание платежа через ЮMoney API
     """
     try:
-        # Параметры для создания платежа в ЮMoney (обратите внимание: поле 'secret' убрано)
+        # Параметры для создания платежа в ЮMoney
         payload = {
             'amount': float(order.total_price),
             'order_id': str(order.id),
             'description': f'Оплата заказа #{order.id}',
             'return_url': settings.YOOMONEY_RETURN_URL,
             'client_id': settings.YOOMONEY_CLIENT_ID,
-            'notification_url': "http://localhost/payments/yoomoney-notify/"
+            'secret': settings.YOOMONEY_SECRET
         }
         
         # Отправка запроса в ЮMoney
@@ -58,8 +58,10 @@ def check_payment_status(payment_id):
         payment = Payment.objects.get(payment_id=payment_id)
         order = payment.order
         
-        url = "https://yoomoney.ru/api/operation-history"
+        # Используем данные из settings
+        url = f"https://yoomoney.ru/api/operation-history"
         
+        # Параметры запроса
         headers = {
             'Authorization': f'Bearer {settings.YOOMONEY_TOKEN}'
         }
@@ -68,6 +70,7 @@ def check_payment_status(payment_id):
             'records': 1
         }
         
+        # Запрос к API ЮMoney
         response = requests.get(url, headers=headers, params=params)
         
         if response.status_code == 200:
@@ -76,18 +79,21 @@ def check_payment_status(payment_id):
             if operations:
                 operation = operations[0]
                 
-                # Проверяем сумму и статус операции
+                # Проверяем сумму и статус
                 if (float(operation['amount']) == float(payment.amount) and 
                     operation['status'] == 'success'):
                     
+                    # Обновляем статус платежа
                     payment.status = Payment.SUCCEEDED
                     payment.save()
                     
-                    # Обновляем статус заказа, замените на логику вашей модели
-                    order.status = 'succeeded'
+                    # Обновляем статус заказа 
+                    # ВАЖНО: замените на реальный статус вашей модели Order
+                    order.status = 'paid'  
                     order.save()
                     
                     return True
+        
         return False
     
     except Payment.DoesNotExist:

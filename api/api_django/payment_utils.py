@@ -21,9 +21,11 @@ def create_payment(order):
             'description': f'Оплата заказа #{order.id}',
             'return_url': settings.YOOMONEY_RETURN_URL,
             'client_id': settings.YOOMONEY_CLIENT_ID,
-            'notification_url': "http://localhost/api/payments/yoomoney-notify/"
+            'notification_url': "http://localhost/payments/yoomoney-notify/"
     }
-
+        print(f"Order ID: {order.id}")
+        print(f"Total Price: {order.total_price}")
+        print(f"Account: {settings.YOOMONEY_ACCOUNT}")
         
         # Отправка запроса в ЮMoney
         response = requests.post(
@@ -48,7 +50,7 @@ def create_payment(order):
             raise Exception("Не удалось создать платеж")
     
     except Exception as e:
-        logger.error(f"Ошибка в create_payment: {str(e)}")
+        logger.error(f"Полная ошибка: {e}", exc_info=True)
         raise
 
 def check_payment_status(payment_id):
