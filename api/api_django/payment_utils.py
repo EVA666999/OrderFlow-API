@@ -35,27 +35,48 @@ def create_payment(order):
     # Возвращаем URL для оплаты и сам объект платежа
     return quickpay.redirected_url, payment
 
+import time
+
 def check_payment_status(payment_id):
     """
-    Проверяет статус платежа по его идентификатору
+    Проверяет статус платежа по его идентификатору с несколькими попытками
     """
     try:
         client = Client(settings.YOOMONEY_TOKEN)
-        history = client.operation_history(label=payment_id)
-        
-        for operation in history.operations:
+
+        # Делаем до 3 попыток получить операции по метке
+        operations = None
+        for i in range(3):
+            operations = client.operation_history(label=payment_id)
+            if operations.operations:
+                break
+            print(f"Попытка {i+1}: операций нет, жду 2 секунды...")
+            time.sleep(2)
+
+        if not operations or not operations.operations:
+            print("Операции не найдены вообще.")
+            return False
+
+        for operation in operations.operations:
+            print(f"Найдена операция: label={operation.label}, status={operation.status}")
             if operation.label == payment_id:
                 payment = Payment.objects.get(payment_id=payment_id)
-                
+
                 if operation.status == "success":
                     payment.status = Payment.SUCCEEDED
                     payment.save()
                     return True
-                elif operation.status == "canceled":
+                elif operation.status in ["canceled", "refused"]:
                     payment.status = Payment.CANCELED
                     payment.save()
-        
+                    return False
+
+        print("Операция с нужным label не найдена.")
+        return False
+
+    except Payment.DoesNotExist:
+        print(f"Платёж с ID {payment_id} не найден в базе.")
         return False
     except Exception as e:
-        print(f"Error checking payment status: {e}")
+        print(f"Ошибка при проверке статуса платежа: {e}")
         return False

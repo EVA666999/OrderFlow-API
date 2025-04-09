@@ -23,34 +23,34 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Payment.objects.all()
         return Payment.objects.filter(order__user=self.request.user)
     
-@action(detail=False, methods=['get'])
-def success(self, request):
-    """
-    Обработчик успешного платежа - возвращает результат для API
-    """
-    payment_id = request.query_params.get('label')
-    
-    if not payment_id:
-        return Response({'error': 'Payment ID not provided'}, status=400)
-    
-    try:
-        payment = Payment.objects.get(payment_id=payment_id)
+    @action(detail=False, methods=['get'])
+    def success(self, request):
+        """
+        Обработчик успешного платежа - возвращает результат для API
+        """
+        payment_id = request.query_params.get('label')
         
-        check_payment_status(payment_id)
+        if not payment_id:
+            return Response({'error': 'Payment ID not provided'}, status=400)
         
-        return Response({
-            'success': True,
-            'order_id': payment.order.id,
-            'payment_id': payment.payment_id,
-            'status': payment.status,
-            'is_paid': payment.status == Payment.SUCCEEDED,
-            'amount': float(payment.amount)
-        })
-        
-    except Payment.DoesNotExist:
-        return Response({'error': 'Payment not found'}, status=404)
-    except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        try:
+            payment = Payment.objects.get(payment_id=payment_id)
+            
+            check_payment_status(payment_id)
+            
+            return Response({
+                'success': True,
+                'order_id': payment.order.id,
+                'payment_id': payment.payment_id,
+                'status': payment.status,
+                'is_paid': payment.status == Payment.SUCCEEDED,
+                'amount': float(payment.amount)
+            })
+            
+        except Payment.DoesNotExist:
+            return Response({'error': 'Payment not found'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
     
     @action(detail=False, methods=['post'])
     def create_payment(self, request):
@@ -60,7 +60,7 @@ def success(self, request):
         order_id = request.data.get('order_id')
         
         if not order_id:
-            return Response({'error': 'Необходимо указать ID заказа'}, status=400)
+            return Response({'error': 'Необходимо указать ID заказа order_id: '}, status=400)
         
         try:
             # Проверяем, что заказ принадлежит текущему пользователю
