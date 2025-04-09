@@ -21,8 +21,18 @@ ALLOWED_HOSTS = [
     "127.0.0.1"
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'http://vasilekretsu.ru'
+    'https://vasilekretsu.ru',
+    'http://vasilekretsu.ru',
+    'http://localhost'
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    'https://vasilekretsu.ru',
+    'http://vasilekretsu.ru',
+    'http://localhost:3000'
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

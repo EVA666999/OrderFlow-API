@@ -1,27 +1,29 @@
 import logging
+import hmac
+import hashlib
+import base64
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
 from .payment_utils import create_payment, check_payment_status
 from .models import Payment
 from .serializers import PaymentSerializer
 from django.conf import settings
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from rest_framework import filters, viewsets
+from rest_framework import filters, viewsets, status
 from api_django.models import Order
-import hashlib
 from api_django.permissions import IsAdminOrCustomer
-import hmac
-
-
 
 logger = logging.getLogger(__name__)
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    # permission_classes = [IsAdminOrCustomer]
+    permission_classes = [IsAdminOrCustomer]
     
     def get_queryset(self):
         """
@@ -54,9 +56,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 status=Payment.PENDING
             ).first()
             
-            if existing_payment:
+            if existing_payment and existing_payment.payment_url:
                 return Response({
-                    'payment_url': f"https://yoomoney.ru/checkout/payments/v2/contract?orderId={existing_payment.payment_id}",
+                    'payment_url': existing_payment.payment_url,
                     'payment_id': existing_payment.payment_id
                 })
             
@@ -142,11 +144,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Ошибка обновления статуса платежа: {str(e)}")
             return Response({'error': str(e)}, status=500)
-        
-from rest_framework.views import APIView
-import hashlib
 
+
+@method_decorator(csrf_exempt, name='dispatch')
 class YooMoneyNotificationView(APIView):
+    """
+    Обработчик уведомлений от ЮMoney.
+    """
     permission_classes = []  # Публичный доступ
     
     def post(self, request):
@@ -154,66 +158,97 @@ class YooMoneyNotificationView(APIView):
         Обработчик уведомлений от ЮMoney.
         В боевом режиме этот метод будет вызываться системой ЮMoney
         """
-        notification_type = request.data.get('notification_type')
-        operation_id = request.data.get('operation_id')
-        amount = request.data.get('amount')
-        currency = request.data.get('currency')
-        datetime_value = request.data.get('datetime')
-        sender = request.data.get('sender')
-        codepro = request.data.get('codepro')
-        label = request.data.get('label')  # Это наш payment_id
-        sha1_hash = request.data.get('sha1_hash')
-        
-        # Проверка подписи
-        check_str = f'{notification_type}&{operation_id}&{amount}&{currency}&{datetime_value}&{sender}&{codepro}&{settings.YOOMONEY_SECRET}&{label}'
-        check_hash = hashlib.sha1(check_str.encode()).hexdigest()
-        
-        if sha1_hash and check_hash != sha1_hash:
-            return Response({'error': 'Неверная подпись'}, status=400)
-        
-        # Обработка платежа
         try:
-            payment = Payment.objects.get(payment_id=label)
+            # Получаем данные из запроса
+            notification_type = request.data.get('notification_type')
+            operation_id = request.data.get('operation_id')
+            amount = request.data.get('amount')
+            currency = request.data.get('currency')
+            datetime_value = request.data.get('datetime')
+            sender = request.data.get('sender')
+            codepro = request.data.get('codepro')
+            label = request.data.get('label')  # Это наш payment_id
+            sha1_hash = request.data.get('sha1_hash')
             
-            # Проверяем сумму платежа
-            if float(amount) >= float(payment.amount):
-                payment.status = Payment.SUCCEEDED
-                payment.save()
+            # Логируем полученные данные
+            logger.info(f"Получено уведомление от ЮMoney: {request.data}")
+            
+            # Проверка подписи
+            check_str = f'{notification_type}&{operation_id}&{amount}&{currency}&{datetime_value}&{sender}&{codepro}&{settings.YOOMONEY_SECRET}&{label}'
+            check_hash = hashlib.sha1(check_str.encode()).hexdigest()
+            
+            # Проверяем подпись
+            if sha1_hash and check_hash != sha1_hash:
+                logger.error(f"Неверная подпись уведомления: {sha1_hash} != {check_hash}")
+                return Response({'error': 'Неверная подпись'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Обработка платежа
+            try:
+                payment = Payment.objects.get(payment_id=label)
                 
-                # Обновляем заказ
-                order = payment.order
-                # Здесь логика обновления заказа
+                # Проверяем сумму платежа
+                if float(amount) >= float(payment.amount):
+                    payment.status = Payment.SUCCEEDED
+                    payment.save()
+                    
+                    # Обновляем заказ
+                    order = payment.order
+                    order.status = 'paid'  # Или другой статус в соответствии с вашей моделью
+                    order.save()
+                    
+                    # Отправляем уведомление через WebSocket
+                    channel_layer = get_channel_layer()
+                    payment_details = {
+                        'payment_id': payment.payment_id,
+                        'order_id': order.id,
+                        'status': payment.status,
+                        'amount': float(payment.amount)
+                    }
+                    
+                    async_to_sync(channel_layer.group_send)(
+                        "orders_group",
+                        {
+                            "type": "send_payment_details",
+                            "payment_details": payment_details,
+                        },
+                    )
+                    
+                    logger.info(f"Платеж {payment.payment_id} успешно обработан")
+                    return Response({'status': 'ok'})
+                else:
+                    logger.warning(f"Неверная сумма платежа: {amount} < {payment.amount}")
+                    return Response({'error': 'Неверная сумма платежа'}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            except Payment.DoesNotExist:
+                logger.error(f"Платеж с меткой {label} не найден")
+                return Response({'error': 'Платеж не найден'}, status=status.HTTP_404_NOT_FOUND)
                 
-                # Отправляем уведомление через WebSocket
-                channel_layer = get_channel_layer()
-                payment_details = {
-                    'payment_id': payment.payment_id,
-                    'order_id': order.id,
-                    'status': payment.status,
-                    'amount': float(payment.amount)
-                }
-                
-                async_to_sync(channel_layer.group_send)(
-                    "orders_group",
-                    {
-                        "type": "send_payment_details",
-                        "payment_details": payment_details,
-                    },
-                )
-                
-                return Response({'status': 'ok'})
-            else:
-                return Response({'error': 'Неверная сумма платежа'}, status=400)
-                
-        except Payment.DoesNotExist:
-            return Response({'error': 'Платеж не найден'}, status=404)
         except Exception as e:
-            return Response({'error': str(e)}, status=500)
+            logger.error(f"Ошибка обработки уведомления: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
 def payment_success(request):
     """
     Обработчик успешного платежа
     """
-    # Можно добавить логику обработки успешного платежа
+    payment_id = request.GET.get('label')
+    
+    if payment_id:
+        try:
+            # Проверяем статус платежа
+            payment = Payment.objects.get(payment_id=payment_id)
+            check_payment_status(payment_id)
+            
+            context = {
+                'payment': payment,
+                'order': payment.order
+            }
+            
+            return render(request, 'payment_success.html', context)
+        
+        except Payment.DoesNotExist:
+            pass
+    
+    # Если что-то пошло не так, просто рендерим шаблон с минимальным контекстом
     return render(request, 'payment_success.html')

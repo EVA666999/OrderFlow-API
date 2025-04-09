@@ -40,10 +40,20 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("users/", include(users.urls)),
     path("", include(youmoney.urls)),
+    
+    # Маршруты для работы с платежами
+    path('payments/', include([
+        path('create/', PaymentViewSet.as_view({'post': 'create_payment'}), name='create-payment'),
+        path('check/', PaymentViewSet.as_view({'get': 'check_payment'}), name='check-payment'),
+        path('update/', PaymentViewSet.as_view({'post': 'update_payment_status'}), name='update-payment-status'),
+    ])),
+    
+    # Webhook уведомления от ЮMoney
     path('yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
-    path('update-payment-status/', PaymentViewSet.as_view({'post': 'update_payment_status'}), name='update-payment-status'),
-    path('check-payment/', PaymentViewSet.as_view({'get': 'check_payment'}), name='check-payment'),
+    
+    # Обработчик успешного платежа
     path('payment/success/', payment_success, name='payment_success'),
+    
     path("chat/", include("aichat.urls")),
     path("auth/", include("social_django.urls", namespace="social")),
     path("auth/", include("djoser.urls")),
