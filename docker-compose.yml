@@ -91,7 +91,7 @@ services:
     volumes:
       - static_data:/staticfiles 
       - media_data:/media
-      - cloudflare_certs:/etc/cloudflare  # Том для сертификатов CloudFlare
+      - ./api/cloudflare_certs:/etc/cloudflare
     ports:
       - "80:80"
       - "443:443"
