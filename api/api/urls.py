@@ -6,10 +6,13 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
+from youmoney_app.views import YooMoneyNotificationView
+
 
 
 from api_django.urls import api
 from users.urls import users
+from youmoney_app.urls import youmoney
 
 security_definition = {
     "BearerAuth": openapi.Parameter(
@@ -38,6 +41,10 @@ urlpatterns = [
     path("api/", include(api.urls)),
     path("users/", include("users.urls")),
     path("users/", include(users.urls)),
+    path("/", include(youmoney.urls)),
+    path('payment/test/', TemplateView.as_view(template_name='payment_test.html'), name='payment_test'),
+    path('api/yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
+    path('payment/success/', TemplateView.as_view(template_name='payment_success.html'), name='payment_success'),
     path("chat/", include("aichat.urls")),
     path("auth/", include("social_django.urls", namespace="social")),
     path("auth/", include("djoser.urls")),

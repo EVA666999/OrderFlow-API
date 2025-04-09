@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     "social_django",
+    "youmoney_app",
 ]
 
 MIDDLEWARE = [
@@ -86,11 +87,11 @@ ASGI_APPLICATION = "api.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", "django"),
-        "USER": os.getenv("POSTGRES_USER", "django"),  
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
-        "HOST": os.getenv("DB_HOST", ""),
-        "PORT": os.getenv("DB_PORT", 5432),
+        "NAME": os.getenv("POSTGRES_DB_local", "django"),
+        "USER": os.getenv("POSTGRES_USER_local", "django"),  
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD_local", ""),
+        "HOST": os.getenv("DB_HOST_local", ""),
+        "PORT": os.getenv("DB_PORT_local", 5432),
     }
 }
 
@@ -218,3 +219,10 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=2, minute=0),
     },
 }
+
+
+#youmoney
+YOOMONEY_ACCOUNT = os.getenv('YOOMONEY_ACCOUNT')
+YOOMONEY_TOKEN = os.getenv('YOOMONEY_TOKEN')
+# YOOMONEY_SECRET = os.getenv('YOOMONEY_SECRET')
+YOOMONEY_REDIRECT_URL = os.getenv('YOOMONEY_REDIRECT_URL')
