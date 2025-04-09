@@ -21,7 +21,7 @@ ALLOWED_HOSTS = [
     "127.0.0.1"
 ]
 CSRF_TRUSTED_ORIGINS = [
-    'https://vasilekretsu.ru',  
+    'http://vasilekretsu.ru'
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = True
+SECURE_SSL_REDIRECT = False
 
 INSTALLED_APPS = [
     "django.contrib.admin",
