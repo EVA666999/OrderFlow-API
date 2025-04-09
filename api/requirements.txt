@@ -35,3 +35,5 @@ django-celery-beat==2.5.0
 django-celery-results==2.5.1
 
 yoomoney==0.1.0
+yoomoney 
+requests

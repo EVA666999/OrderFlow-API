@@ -8,41 +8,31 @@ logger = logging.getLogger(__name__)
 
 def create_payment(order):
     """
-    Создание платежа через ЮMoney SDK
+    Создает платеж в YooMoney и возвращает URL для перенаправления
     """
-    try:
-        # Создаем уникальный идентификатор платежа
-        payment_id = f"{order.id}_{uuid.uuid4().hex[:8]}"
-        
-        # Используем SDK ЮMoney для создания платежа
-        quickpay = Quickpay(
-            receiver=settings.YOOMONEY_ACCOUNT,
-            quickpay_form="shop",
-            targets=f"Оплата заказа #{order.id}",
-            paymentType="SB",
-            sum=float(order.total_price),
-            label=payment_id,  # Используем payment_id как метку для идентификации
-            successURL=settings.YOOMONEY_REDIRECT_URL  # URL для перенаправления после успешной оплаты
-        )
-        
-        # Получаем URL для оплаты
-        payment_url = quickpay.redirected_url
-        
-        # Создаем объект платежа в базе данных
-        payment = Payment.objects.create(
-            order=order,
-            payment_id=payment_id,
-            amount=order.total_price,
-            status=Payment.PENDING,
-            payment_url=payment_url
-        )
-        
-        return payment_url, payment
+    payment_id = str(uuid.uuid4())
     
-    except Exception as e:
-        logger.error(f"Ошибка в create_payment: {str(e)}")
-        raise
-
+    payment = Payment.objects.create(
+        order=order,
+        payment_id=payment_id,
+        amount=order.total_price,
+        status=Payment.PENDING
+    )
+    
+    # API-ориентированный подход для redirect URL
+    return_url = f"{settings.YOOMONEY_REDIRECT_URL}?label={payment_id}"
+    
+    quickpay = Quickpay(
+        receiver=settings.YOOMONEY_ACCOUNT,
+        quickpay_form="shop",
+        targets=f"Оплата заказа №{order.id}",
+        paymentType="SB",
+        sum=float(order.total_price),
+        label=payment_id,
+        successURL=return_url
+    )
+    
+    return quickpay.redirected_url, payment
 def check_payment_status(payment_id):
     """
     Проверка статуса платежа через ЮMoney API

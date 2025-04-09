@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
-from youmoney_app.views import YooMoneyNotificationView, PaymentViewSet, payment_success
+from youmoney_app.views import YooMoneyNotificationView, PaymentViewSet
 
 from api_django.urls import api
 from users.urls import users
@@ -39,20 +39,12 @@ urlpatterns = [
     path("api/", include(api.urls)),
     path("users/", include("users.urls")),
     path("users/", include(users.urls)),
-    path("", include(youmoney.urls)),
+    # path("", include(youmoney.urls)),
     
     # Маршруты для работы с платежами
-    path('payments/', include([
-        path('create/', PaymentViewSet.as_view({'post': 'create_payment'}), name='create-payment'),
-        path('check/', PaymentViewSet.as_view({'get': 'check_payment'}), name='check-payment'),
-        path('update/', PaymentViewSet.as_view({'post': 'update_payment_status'}), name='update-payment-status'),
-    ])),
+    path('api/yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
     
-    # Webhook уведомления от ЮMoney
-    path('yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
-    
-    # Обработчик успешного платежа
-    path('payment/success/', payment_success, name='payment_success'),
+    # Маршрут для перенаправления после успешной оплат
     
     path("chat/", include("aichat.urls")),
     path("auth/", include("social_django.urls", namespace="social")),

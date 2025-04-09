@@ -1,5 +1,7 @@
 from rest_framework import routers
 
+from youmoney_app.views import PaymentViewSet
+
 from .views import (
     CategoryViewSet,
     DiscountViewSet,
@@ -14,3 +16,4 @@ api.register(r"products", ProductViewSet, basename="prioducts")
 api.register(r"category", CategoryViewSet, basename="categoty")
 api.register(r"reviews", ProductReviewViewSet, basename="product_reviews")
 api.register(r"discounts", DiscountViewSet, basename="discounts")
+api.register(r"payments", PaymentViewSet, basename="payments")
