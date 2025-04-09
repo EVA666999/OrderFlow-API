@@ -1,7 +1,7 @@
 import logging
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from .payment_utils import create_payment, check_payment_status
 from .models import Payment
 from .serializers import PaymentSerializer
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-    permission_classes = [IsAdminOrCustomer]
+    # permission_classes = [IsAdminOrCustomer]
     
     def get_queryset(self):
         """
@@ -142,7 +142,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             logger.error(f"Ошибка обновления статуса платежа: {str(e)}")
             return Response({'error': str(e)}, status=500)
-    
         
 from rest_framework.views import APIView
 import hashlib
@@ -210,3 +209,11 @@ class YooMoneyNotificationView(APIView):
             return Response({'error': 'Платеж не найден'}, status=404)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+        
+
+def payment_success(request):
+    """
+    Обработчик успешного платежа
+    """
+    # Можно добавить логику обработки успешного платежа
+    return render(request, 'payment_success.html')

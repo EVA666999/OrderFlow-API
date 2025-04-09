@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework.permissions import AllowAny
-from youmoney_app.views import YooMoneyNotificationView, PaymentViewSet
+from youmoney_app.views import YooMoneyNotificationView, PaymentViewSet, payment_success
 
 from api_django.urls import api
 from users.urls import users
@@ -40,9 +40,10 @@ urlpatterns = [
     path("users/", include("users.urls")),
     path("users/", include(users.urls)),
     path("", include(youmoney.urls)),
-    path('api/yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
-    path('api/update-payment-status/', PaymentViewSet.as_view({'post': 'update_payment_status'}), name='update-payment-status'),
-    path('api/check-payment/', PaymentViewSet.as_view({'get': 'check_payment'}), name='check-payment'),
+    path('yoomoney/notification/', YooMoneyNotificationView.as_view(), name='yoomoney_notification'),
+    path('update-payment-status/', PaymentViewSet.as_view({'post': 'update_payment_status'}), name='update-payment-status'),
+    path('check-payment/', PaymentViewSet.as_view({'get': 'check_payment'}), name='check-payment'),
+    path('payment/success/', payment_success, name='payment_success'),
     path("chat/", include("aichat.urls")),
     path("auth/", include("social_django.urls", namespace="social")),
     path("auth/", include("djoser.urls")),
