@@ -1,3 +1,4 @@
+import json
 import uuid
 import logging
 from yoomoney import Client, Quickpay
@@ -36,6 +37,9 @@ def create_payment(order):
     
     return quickpay.redirected_url, payment
 def check_payment_status(payment_id):
+    """
+    Проверка статуса платежа через YooMoney API
+    """
     try:
         payment = Payment.objects.get(payment_id=payment_id)
         order = payment.order
@@ -43,27 +47,40 @@ def check_payment_status(payment_id):
         client = Client(settings.YOOMONEY_TOKEN)
         history = client.operation_history(label=payment_id)
 
-        # Добавляем логирование всех операций
-        if history.operations:
-            for op in history.operations:
-                logger.debug(f"Операция: label={op.label}, статус={op.status}, сумма={op.amount}")
-        else:
-            logger.info("Операций не найдено в истории")
+        # Логируем тип и содержимое history для отладки
+        logger.debug("Тип history: %s", type(history))
+        logger.debug("Содержимое history: %s", history)
 
-        if history.operations:
-            operation = history.operations[0]
-            # Если API возвращает, например, 'succeeded' вместо 'success', можно отладить это тут:
-            logger.info(f"Проверяем статус операции: {operation.status}")
+        # Если history не является словарем, пытаемся привести его к dict
+        if not isinstance(history, dict):
+            try:
+                # Приводим к строке и пробуем распарсить JSON
+                history = json.loads(str(history))
+            except Exception as ex:
+                logger.error(f"Не удалось преобразовать историю в dict: {ex}. История: {history}")
+                return False
 
-            if operation.status == 'success':
-                if float(operation.amount) >= float(payment.amount):
+        # Предполагаем, что history теперь словарь с ключом "operations"
+        operations = history.get("operations", [])
+        if operations:
+            for op in operations:
+                logger.debug(f"Операция: label={op.get('label')}, статус={op.get('status')}, сумма={op.get('amount')}")
+            operation = operations[0]
+            logger.info(f"Проверяем статус операции: {operation.get('status')}")
+            print(f"Проверяем статус операции: {operation.get('status')}")
+
+            if operation.get('status') in ['success', 'succeeded']:
+                if float(operation.get('amount')) >= float(payment.amount):
                     payment.status = Payment.SUCCEEDED
                     payment.save()
                     order.status = 'paid'
                     order.save()
                     return True
+        else:
+            logger.info("Операций не найдено в истории")
 
         return False
+
     except Payment.DoesNotExist:
         logger.error(f"Платеж {payment_id} не найден")
         return False

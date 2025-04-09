@@ -1,0 +1,20 @@
+[2025-04-09 15:32:34,853] WARNING [django.request:224] Not Found: /ws/orders/
+[2025-04-09 15:32:34,872] WARNING [django.request:224] Not Found: /ws/categories/
+[2025-04-09 15:32:34,889] WARNING [django.request:224] Not Found: /ws/products/
+[2025-04-09 15:32:34,919] WARNING [django.request:224] Not Found: /ws/reviews/
+[2025-04-09 15:32:49,897] WARNING [django.request:224] Not Found: /ws/orders/
+[2025-04-09 15:32:49,903] WARNING [django.request:224] Not Found: /
+[2025-04-09 15:33:30,653] WARNING [django.request:224] Bad Request: /api/orders/
+[2025-04-09 15:37:54,005] ERROR [payments:71] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 15:43:24,216] WARNING [django.request:224] Method Not Allowed: /api/payments/simulate_notification/
+[2025-04-09 15:43:46,375] ERROR [payments:74] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 15:46:17,242] ERROR [payments:74] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 15:46:21,228] ERROR [payments:74] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 15:49:52,230] ERROR [payments:74] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 15:54:40,633] WARNING [django.request:224] Bad Request: /api/payments/simulate_notification/
+[2025-04-09 15:56:50,506] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 15:57:00,907] ERROR [payments:75] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:08:45,779] ERROR [payments:82] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:13:09,841] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 16:13:22,341] ERROR [payments:82] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:17:38,972] ERROR [payments:88] Ошибка в check_payment_status: string indices must be integers
