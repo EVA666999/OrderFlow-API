@@ -16,11 +16,12 @@ load_dotenv()
 UTC = timezone.utc
 
 ALLOWED_HOSTS = [
-    "vasilekretsu.ru",  
+    "vasilekretsu.ru",
+    "localhost",
+    "127.0.0.1"
 ]
-
 CSRF_TRUSTED_ORIGINS = [
-    'http://vasilekretsu.ru',  
+    'https://vasilekretsu.ru',  
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
