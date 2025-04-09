@@ -23,6 +23,35 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Payment.objects.all()
         return Payment.objects.filter(order__user=self.request.user)
     
+@action(detail=False, methods=['get'])
+def success(self, request):
+    """
+    Обработчик успешного платежа - возвращает результат для API
+    """
+    payment_id = request.query_params.get('label')
+    
+    if not payment_id:
+        return Response({'error': 'Payment ID not provided'}, status=400)
+    
+    try:
+        payment = Payment.objects.get(payment_id=payment_id)
+        
+        check_payment_status(payment_id)
+        
+        return Response({
+            'success': True,
+            'order_id': payment.order.id,
+            'payment_id': payment.payment_id,
+            'status': payment.status,
+            'is_paid': payment.status == Payment.SUCCEEDED,
+            'amount': float(payment.amount)
+        })
+        
+    except Payment.DoesNotExist:
+        return Response({'error': 'Payment not found'}, status=404)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
     @action(detail=False, methods=['post'])
     def create_payment(self, request):
         """
@@ -152,6 +181,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Response({"error": "Платеж не найден"}, status=404)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+    
         
 from rest_framework.views import APIView
 import hashlib
