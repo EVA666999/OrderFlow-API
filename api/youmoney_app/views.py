@@ -1,3 +1,4 @@
+import logging
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.shortcuts import redirect
@@ -13,63 +14,41 @@ import hashlib
 from api_django.permissions import IsAdminOrCustomer
 import hmac
 
+
+
+logger = logging.getLogger(__name__)
+
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAdminOrCustomer]
     
     def get_queryset(self):
+        """
+        Возвращает платежи с фильтрацией по пользователю
+        """
         if self.request.user.is_staff:
             return Payment.objects.all()
         return Payment.objects.filter(order__user=self.request.user)
     
-    @action(detail=False, methods=['get'])
-    def success(self, request):
-        """
-        Обработчик успешного платежа - возвращает результат для API
-        """
-        payment_id = request.query_params.get('label')
-        
-        if not payment_id:
-            return Response({'error': 'Payment ID not provided'}, status=400)
-        
-        try:
-            payment = Payment.objects.get(payment_id=payment_id)
-            
-            check_payment_status(payment_id)
-            
-            return Response({
-                'success': True,
-                'order_id': payment.order.id,
-                'payment_id': payment.payment_id,
-                'status': payment.status,
-                'is_paid': payment.status == Payment.SUCCEEDED,
-                'amount': float(payment.amount)
-            })
-            
-        except Payment.DoesNotExist:
-            return Response({'error': 'Payment not found'}, status=404)
-        except Exception as e:
-            return Response({'error': str(e)}, status=500)
-    
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['POST'])
     def create_payment(self, request):
         """
-        Создает платеж для указанного заказа
+        Создание нового платежа для заказа
         """
         order_id = request.data.get('order_id')
         
         if not order_id:
-            return Response({'error': 'Необходимо указать ID заказа order_id: '}, status=400)
+            return Response({'error': 'Необходимо указать ID заказа'}, status=400)
         
         try:
-            # Проверяем, что заказ принадлежит текущему пользователю
+            # Проверка доступа к заказу
             if request.user.is_staff:
                 order = Order.objects.get(id=order_id)
             else:
                 order = Order.objects.get(id=order_id, user=request.user)
             
-            # Проверяем, есть ли уже созданный платеж для этого заказа
+            # Проверка существующего платежа
             existing_payment = Payment.objects.filter(
                 order=order, 
                 status=Payment.PENDING
@@ -81,23 +60,24 @@ class PaymentViewSet(viewsets.ModelViewSet):
                     'payment_id': existing_payment.payment_id
                 })
             
-            # Создаем платеж
+            # Создание нового платежа
             payment_url, payment = create_payment(order)
             
             return Response({
                 'payment_url': payment_url,
                 'payment_id': payment.payment_id
             })
-            
+        
         except Order.DoesNotExist:
             return Response({'error': 'Заказ не найден'}, status=404)
         except Exception as e:
+            logger.error(f"Ошибка создания платежа: {str(e)}")
             return Response({'error': str(e)}, status=500)
     
-    @action(detail=False, methods=['get'])
-    def check_status(self, request):
+    @action(detail=False, methods=['GET'])
+    def check_payment(self, request):
         """
-        Проверяет статус платежа
+        Проверка статуса платежа
         """
         payment_id = request.query_params.get('payment_id')
         
@@ -107,15 +87,47 @@ class PaymentViewSet(viewsets.ModelViewSet):
         try:
             payment = Payment.objects.get(payment_id=payment_id)
             
-            # Если пользователь не админ, проверяем что платеж относится к его заказу
+            # Проверка прав доступа
             if not request.user.is_staff and payment.order.user != request.user:
-                return Response({'error': 'У вас нет доступа к этому платежу'}, status=403)
+                return Response({'error': 'Нет доступа к этому платежу'}, status=403)
             
-            # Проверяем статус в ЮMoney, если платеж все еще в ожидании
-            if payment.status == Payment.PENDING:
-                is_paid = check_payment_status(payment_id)
-            else:
-                is_paid = payment.status == Payment.SUCCEEDED
+            # Проверка статуса платежа
+            is_paid = check_payment_status(payment_id)
+            
+            # Подготовка ответа
+            return Response({
+                'order_id': payment.order.id,
+                'payment_id': payment.payment_id,
+                'status': payment.status,
+                'is_paid': is_paid,
+                'amount': float(payment.amount)
+            })
+        
+        except Payment.DoesNotExist:
+            return Response({'error': 'Платеж не найден'}, status=404)
+        except Exception as e:
+            logger.error(f"Ошибка проверки платежа: {str(e)}")
+            return Response({'error': str(e)}, status=500)
+    
+    @action(detail=False, methods=['POST'])
+    def update_payment_status(self, request):
+        """
+        Принудительное обновление статуса платежа
+        """
+        payment_id = request.data.get('payment_id')
+        
+        if not payment_id:
+            return Response({'error': 'Не указан ID платежа'}, status=400)
+        
+        try:
+            payment = Payment.objects.get(payment_id=payment_id)
+            
+            # Проверка прав доступа
+            if not request.user.is_staff and payment.order.user != request.user:
+                return Response({'error': 'Нет доступа к этому платежу'}, status=403)
+            
+            # Принудительная проверка статуса
+            is_paid = check_payment_status(payment_id)
             
             return Response({
                 'order_id': payment.order.id,
@@ -124,63 +136,12 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 'is_paid': is_paid,
                 'amount': float(payment.amount)
             })
-            
+        
         except Payment.DoesNotExist:
             return Response({'error': 'Платеж не найден'}, status=404)
         except Exception as e:
+            logger.error(f"Ошибка обновления статуса платежа: {str(e)}")
             return Response({'error': str(e)}, status=500)
-    
-    @action(detail=False, methods=['post'])
-    def simulate_notification(self, request):
-        """
-        Имитирует получение уведомления от ЮMoney 
-        (только для локальной разработки)
-        """
-        if not settings.DEBUG:
-            return Response({"error": "Эта функция доступна только в режиме отладки"}, status=403)
-        
-        payment_id = request.data.get('payment_id')
-        
-        if not payment_id:
-            return Response({"error": "Необходимо указать ID платежа"}, status=400)
-        
-        try:
-            payment = Payment.objects.get(payment_id=payment_id)
-            
-            # Обновляем статус платежа
-            payment.status = Payment.SUCCEEDED
-            payment.save()
-            
-            # Обработка заказа после успешной оплаты
-            order = payment.order
-            # Здесь можно добавить логику изменения статуса заказа
-            
-            # Отправка уведомления через WebSocket
-            channel_layer = get_channel_layer()
-            payment_details = {
-                'payment_id': payment.payment_id,
-                'order_id': order.id,
-                'status': payment.status,
-                'amount': float(payment.amount)
-            }
-            
-            async_to_sync(channel_layer.group_send)(
-                "orders_group",
-                {
-                    "type": "send_payment_details",
-                    "payment_details": payment_details,
-                },
-            )
-            
-            return Response({
-                "status": "success", 
-                "message": "Платеж успешно обработан"
-            })
-            
-        except Payment.DoesNotExist:
-            return Response({"error": "Платеж не найден"}, status=404)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
     
         
 from rest_framework.views import APIView

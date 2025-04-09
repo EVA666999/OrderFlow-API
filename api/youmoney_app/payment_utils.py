@@ -1,91 +1,98 @@
 import uuid
+import requests
 from yoomoney import Client, Quickpay
 from django.conf import settings
 from .models import Payment
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 def create_payment(order):
     """
-    Создает платеж в YooMoney и возвращает URL для перенаправления
+    Создание платежа через ЮMoney API
     """
-    payment_id = str(uuid.uuid4())
+    try:
+        # Параметры для создания платежа в ЮMoney (обратите внимание: поле 'secret' убрано)
+        payload = {
+            'amount': float(order.total_price),
+            'order_id': str(order.id),
+            'description': f'Оплата заказа #{order.id}',
+            'return_url': settings.YOOMONEY_RETURN_URL,
+            'client_id': settings.YOOMONEY_CLIENT_ID,
+            'notification_url': "http://localhost/payments/yoomoney-notify/"
+        }
+        
+        # Отправка запроса в ЮMoney
+        response = requests.post(
+            'https://yoomoney.ru/api/create-payment', 
+            json=payload
+        )
+        
+        if response.status_code == 200:
+            payment_data = response.json()
+            
+            # Создаем объект платежа в базе данных
+            payment = Payment.objects.create(
+                order=order,
+                payment_id=payment_data['payment_id'],
+                amount=order.total_price,
+                status=Payment.PENDING
+            )
+            
+            return payment_data['payment_url'], payment
+        else:
+            logger.error(f"Ошибка создания платежа: {response.text}")
+            raise Exception("Не удалось создать платеж")
     
-    payment = Payment.objects.create(
-        order=order,
-        payment_id=payment_id,
-        amount=order.total_price,
-        status=Payment.PENDING
-    )
-    
-    # API-ориентированный подход для redirect URL
-    return_url = f"{settings.YOOMONEY_REDIRECT_URL}?label={payment_id}"
-    
-    quickpay = Quickpay(
-        receiver=settings.YOOMONEY_ACCOUNT,
-        quickpay_form="shop",
-        targets=f"Оплата заказа №{order.id}",
-        paymentType="SB",
-        sum=float(order.total_price),
-        label=payment_id,
-        successURL=return_url
-    )
-    
-    return quickpay.redirected_url, payment
+    except Exception as e:
+        logger.error(f"Ошибка в create_payment: {str(e)}")
+        raise
 
 def check_payment_status(payment_id):
     """
-    Проверяет статус платежа в YooMoney и обновляет его в базе данных
-    Возвращает True, если платеж успешно выполнен, иначе False
+    Проверка статуса платежа через ЮMoney
     """
     try:
-        # Проверяем есть ли платеж в нашей БД
+        # Находим платеж в базе данных
         payment = Payment.objects.get(payment_id=payment_id)
+        order = payment.order
         
-        # Если платеж уже обработан как успешный, просто возвращаем True
-        if payment.status == Payment.SUCCEEDED:
-            return True
-            
-        # Если платеж уже обработан как отмененный, просто возвращаем False
-        if payment.status == Payment.CANCELED:
-            return False
-            
-        # Проверяем статус в YooMoney
-        client = Client(settings.YOOMONEY_TOKEN)
+        url = "https://yoomoney.ru/api/operation-history"
         
-        # Получаем историю операций
-        operations = client.operation_history(label=payment_id)
+        headers = {
+            'Authorization': f'Bearer {settings.YOOMONEY_TOKEN}'
+        }
+        params = {
+            'label': payment_id,
+            'records': 1
+        }
         
-        # Если операций нет, платеж еще не выполнен
-        if not operations.operations:
-            return False
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code == 200:
+            operations = response.json().get('operations', [])
             
-        # Берем последнюю операцию с нашей меткой
-        for operation in operations.operations:
-            if operation.label == payment_id:
-                # Проверка статуса операции
-                if operation.status == 'success':
-                    # Обновляем статус платежа в БД
+            if operations:
+                operation = operations[0]
+                
+                # Проверяем сумму и статус операции
+                if (float(operation['amount']) == float(payment.amount) and 
+                    operation['status'] == 'success'):
+                    
                     payment.status = Payment.SUCCEEDED
                     payment.save()
                     
-                    # Здесь можно добавить обновление статуса заказа
-                    # order = payment.order
-                    # order.status = ...
-                    # order.save()
+                    # Обновляем статус заказа, замените на логику вашей модели
+                    order.status = 'succeeded'
+                    order.save()
                     
                     return True
-                elif operation.status in ['refused', 'canceled']:
-                    payment.status = Payment.CANCELED
-                    payment.save()
-                    return False
-                    
-        # Если не нашли операцию со статусом success/refused/canceled, значит платеж в процессе
         return False
-        
+    
     except Payment.DoesNotExist:
-        # Если платеж не найден в нашей БД
+        logger.error(f"Платеж {payment_id} не найден")
         return False
     except Exception as e:
-        # В случае ошибки при обращении к API YooMoney или других проблем
-        # Логируем ошибку и считаем платеж неуспешным
-        print(f"Ошибка при проверке статуса платежа: {str(e)}")
+        logger.error(f"Ошибка в check_payment_status: {str(e)}")
         return False
