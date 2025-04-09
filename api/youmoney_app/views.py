@@ -44,8 +44,11 @@ class PaymentViewSet(viewsets.ModelViewSet):
         try:
             payment = Payment.objects.get(payment_id=payment_id)
             
-            # Проверяем статус в ЮMoney
+            # Проверяем статус в ЮMoney – он обновит запись в БД, если найдёт операцию
             check_payment_status(payment_id)
+            
+            # Обновляем объект, чтобы получить свежий статус из базы
+            payment.refresh_from_db()
             
             return Response({
                 'success': True,

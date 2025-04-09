@@ -10,6 +10,9 @@ from datetime import timedelta, timezone
 from pathlib import Path
 from celery.schedules import crontab
 from dotenv import load_dotenv
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv()
 
@@ -236,3 +239,51 @@ YOOMONEY_ACCOUNT = os.getenv('YOOMONEY_ACCOUNT')
 YOOMONEY_TOKEN = os.getenv('YOOMONEY_TOKEN')
 # YOOMONEY_SECRET = os.getenv('YOOMONEY_SECRET')
 YOOMONEY_REDIRECT_URL = os.getenv('YOOMONEY_REDIRECT_URL')
+
+
+
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,  # оставляем True, если не хотим мешать другим логгерам
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} [{name}:{lineno}] {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'project.log'),
+            'formatter': 'verbose',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'yoomoney': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'payments': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    }
+}
