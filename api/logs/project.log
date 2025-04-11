@@ -18,3 +18,31 @@
 [2025-04-09 16:13:09,841] WARNING [django.request:224] Unauthorized: /api/payments/success/
 [2025-04-09 16:13:22,341] ERROR [payments:82] Ошибка в check_payment_status: string indices must be integers
 [2025-04-09 16:17:38,972] ERROR [payments:88] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:20:02,408] ERROR [payments:88] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:31:39,789] ERROR [payments:87] Ошибка в check_payment_status: string indices must be integers
+[2025-04-09 16:40:40,960] WARNING [django.request:224] Method Not Allowed: /api/payments/simulate_notification/
+[2025-04-09 16:41:21,617] WARNING [django.request:224] Not Found: /payments/create_payment/
+[2025-04-09 17:04:18,422] WARNING [django.request:224] Not Found: /api/ordrers/
+[2025-04-09 17:05:51,583] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 17:06:07,869] INFO [payments:49] Raw history: <yoomoney.history.history.History object at 0x7f09db24ac70>
+[2025-04-09 17:06:07,870] ERROR [payments:82] Ошибка в check_payment_status: 'History' object has no attribute 'get'
+[2025-04-09 17:17:51,918] WARNING [django.request:224] Not Found: /api/orders/payments/create_payment/
+[2025-04-09 17:18:52,917] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 17:18:59,748] INFO [payments:48] Raw history: <yoomoney.history.history.History object at 0x7fd79f82ba60>
+[2025-04-09 17:18:59,748] INFO [payments:49] Тип history: <class 'yoomoney.history.history.History'>
+[2025-04-09 17:18:59,749] DEBUG [payments:54] Операция: label=de178020-2790-48dc-9fda-fe11bd0b6435, статус=success, сумма=1.94
+[2025-04-09 17:18:59,749] INFO [payments:57] Проверяем статус операции: success
+[2025-04-09 17:20:10,781] INFO [payments:48] Raw history: <yoomoney.history.history.History object at 0x7fd79a05d7f0>
+[2025-04-09 17:20:10,781] INFO [payments:49] Тип history: <class 'yoomoney.history.history.History'>
+[2025-04-09 17:20:10,782] DEBUG [payments:54] Операция: label=de178020-2790-48dc-9fda-fe11bd0b6435, статус=success, сумма=1.94
+[2025-04-09 17:20:10,782] INFO [payments:57] Проверяем статус операции: success
+[2025-04-09 17:27:05,914] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 17:27:11,148] INFO [payments:48] Raw history: <yoomoney.history.history.History object at 0x7fadaa185940>
+[2025-04-09 17:27:11,149] INFO [payments:49] Тип history: <class 'yoomoney.history.history.History'>
+[2025-04-09 17:27:11,149] DEBUG [payments:54] Операция: label=ba7d4520-87b2-408f-927a-451da945c400, статус=success, сумма=1.94
+[2025-04-09 17:27:11,150] INFO [payments:57] Проверяем статус операции: success
+[2025-04-09 17:38:27,158] WARNING [django.request:224] Unauthorized: /api/payments/success/
+[2025-04-09 17:38:32,829] INFO [payments:49] Raw history: <yoomoney.history.history.History object at 0x7f140d50d460>
+[2025-04-09 17:38:32,830] INFO [payments:50] Тип history: <class 'yoomoney.history.history.History'>
+[2025-04-09 17:38:32,830] DEBUG [payments:55] Операция: label=f2c2fe1d-b68f-48f9-9aec-c27814700ad8, статус=success, сумма=1.94
+[2025-04-09 17:38:32,830] INFO [payments:58] Проверяем статус операции: success

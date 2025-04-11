@@ -4,6 +4,7 @@ import logging
 from yoomoney import Client, Quickpay
 from django.conf import settings
 from .models import Payment
+from decimal import Decimal
 
 import logging
 
@@ -37,9 +38,6 @@ def create_payment(order):
     
     return quickpay.redirected_url, payment
 def check_payment_status(payment_id):
-    """
-    Проверка статуса платежа через YooMoney API
-    """
     try:
         payment = Payment.objects.get(payment_id=payment_id)
         order = payment.order
@@ -47,37 +45,32 @@ def check_payment_status(payment_id):
         client = Client(settings.YOOMONEY_TOKEN)
         history = client.operation_history(label=payment_id)
 
-        # Логируем тип и содержимое history для отладки
-        logger.debug("Тип history: %s", type(history))
-        logger.debug("Содержимое history: %s", history)
+        # ✅ Логируем что пришло
+        logger.info("Raw history: %s", history)
+        logger.info("Тип history: %s", type(history))
 
-        # Если history не является словарем, пытаемся привести его к dict
-        if not isinstance(history, dict):
-            try:
-                # Приводим к строке и пробуем распарсить JSON
-                history = json.loads(str(history))
-            except Exception as ex:
-                logger.error(f"Не удалось преобразовать историю в dict: {ex}. История: {history}")
-                return False
-
-        # Предполагаем, что history теперь словарь с ключом "operations"
-        operations = history.get("operations", [])
+        operations = history.operations  # 💥 Это работает, потому что History — объект
         if operations:
             for op in operations:
-                logger.debug(f"Операция: label={op.get('label')}, статус={op.get('status')}, сумма={op.get('amount')}")
-            operation = operations[0]
-            logger.info(f"Проверяем статус операции: {operation.get('status')}")
-            print(f"Проверяем статус операции: {operation.get('status')}")
+                logger.debug(f"Операция: label={op.label}, статус={op.status}, сумма={op.amount}")
 
-            if operation.get('status') in ['success', 'succeeded']:
-                if float(operation.get('amount')) >= float(payment.amount):
+            operation = operations[0]
+            logger.info(f"Проверяем статус операции: {operation.status}")
+
+            # ✅ Сравниваем статус
+            if operation.status in ["success", "succeeded"]:
+                op_amount = Decimal(str(operation.amount))
+                pay_amount = payment.amount  # Это уже Decimal
+                if abs(op_amount - pay_amount) <= Decimal('0.1'):
                     payment.status = Payment.SUCCEEDED
                     payment.save()
-                    order.status = 'paid'
+                    order.status = "paid"
                     order.save()
                     return True
+                logger.info(f"Сравнение суммы: операция={op_amount}, заказ={pay_amount}, разница={abs(op_amount - pay_amount)}")
+
         else:
-            logger.info("Операций не найдено в истории")
+            logger.info("Операций нет")
 
         return False
 
@@ -87,4 +80,3 @@ def check_payment_status(payment_id):
     except Exception as e:
         logger.error(f"Ошибка в check_payment_status: {str(e)}")
         return False
-    
