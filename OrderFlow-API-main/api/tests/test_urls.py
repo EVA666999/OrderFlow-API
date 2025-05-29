@@ -1,6 +1,27 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from django.conf import settings
+from channels_redis.core import RedisChannelLayer
+
+
+@pytest.fixture(autouse=True)
+def mock_redis():
+    """Мокаем Redis для тестов."""
+    settings.CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+    yield
+    settings.CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(settings.REDIS_HOST, int(settings.REDIS_PORT))],
+            },
+        },
+    }
 
 
 @pytest.fixture
@@ -53,7 +74,7 @@ def get_token_for_user(user_employee, user_customer):
         format="json",
     )
     assert response.status_code == status.HTTP_200_OK
-    token_employee = response.data["access"]
+    token_employee = response.json()["access"]
 
     response = client.post(
         "/auth/jwt/create/",
@@ -61,7 +82,7 @@ def get_token_for_user(user_employee, user_customer):
         format="json",
     )
     assert response.status_code == status.HTTP_200_OK
-    token_customer = response.data["access"]
+    token_customer = response.json()["access"]
 
     return token_employee, token_customer, client
 

@@ -28,7 +28,7 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-your-secret-key-here")
 
 DEBUG = True
 
@@ -109,6 +109,22 @@ if 'test' in sys.argv:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ':memory:',
+    }
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+else:
+    REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
+    REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(REDIS_HOST, int(REDIS_PORT))],
+            },
+        },
     }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -195,18 +211,6 @@ SOCIAL_AUTH_AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  
 )
 
-REDIS_HOST = os.getenv('REDIS_HOST', '127.0.0.1')
-REDIS_PORT = os.getenv('REDIS_PORT', '6379')
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(REDIS_HOST, int(REDIS_PORT))],
-        },
-    },
-}
-
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -231,7 +235,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'daily-database-backup': {
         'task': 'api.tasks.backup_database',  
-        'schedule': crontab(hour=2, minute=0),
+        'schedule': crontab(hour='2', minute='0'),
     },
 }
 

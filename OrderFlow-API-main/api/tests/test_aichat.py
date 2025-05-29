@@ -1,6 +1,27 @@
 import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
+from django.conf import settings
+from channels_redis.core import RedisChannelLayer
+
+
+@pytest.fixture(autouse=True)
+def mock_redis():
+    """Мокаем Redis для тестов."""
+    settings.CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+    yield
+    settings.CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(settings.REDIS_HOST, int(settings.REDIS_PORT))],
+            },
+        },
+    }
 
 
 @pytest.fixture
