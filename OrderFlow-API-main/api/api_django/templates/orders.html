@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Заказы и Категории</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #orders, #categories, #products, #reviews { margin-top: 20px; }
+        .order, .category, .product, .review { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Заказы</h1>
+    <div id="orders"></div>
+
+    <h1>Категории</h1>
+    <div id="categories"></div>
+
+    <h1>Продукты</h1>
+    <div id="products"></div>
+
+    <h1>Отзывы</h1>
+    <div id="reviews"></div>
+
+    <script>
+        const ordersContainer = document.getElementById('orders');
+        const categoriesContainer = document.getElementById('categories');
+        const productsContainer = document.getElementById('products');
+        const reviewsContainer = document.getElementById('reviews');
+
+        // WebSocket для заказов
+        const ordersSocket = new WebSocket('ws://' + window.location.host + '/ws/orders/');
+
+        ordersSocket.onopen = function() {
+            console.log('WebSocket подключен для заказов');
+        };
+
+        ordersSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение о заказе:', data);
+
+            if (data.order_details) {
+                const orderDetails = data.order_details;
+
+                const orderDiv = document.createElement('div');
+                orderDiv.classList.add('order');
+                
+                orderDiv.innerHTML = `
+                    <strong>Заказ №${orderDetails.order_id}</strong><br>
+                    Пользователь: ${orderDetails.user}<br>
+                    Общая сумма: ${orderDetails.total_price} руб.<br>
+                    <strong>Продукты:</strong>
+                    <ul>
+                        ${orderDetails.products.map(product => `
+                            <li>${product.name} - ${product.price} руб. </li>
+                        `).join('')}
+                    </ul>
+                `;
+                ordersContainer.appendChild(orderDiv);
+            }
+        };
+
+        ordersSocket.onerror = function(error) {
+            console.error('WebSocket ошибка для заказов:', error);
+        };
+
+        ordersSocket.onclose = function() {
+            console.log('WebSocket закрыт для заказов');
+        };
+
+        // WebSocket для категорий
+        const categoriesSocket = new WebSocket('ws://' + window.location.host + '/ws/categories/');
+
+        categoriesSocket.onopen = function() {
+            console.log('WebSocket подключен для категорий');
+        };
+
+        categoriesSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение о категории:', data);
+
+            if (data.category_details) {
+                const categoryDetails = data.category_details;
+
+                const categoryDiv = document.createElement('div');
+                categoryDiv.classList.add('category');
+                
+                categoryDiv.innerHTML = `
+                    <strong>Категория: ${categoryDetails.name}</strong><br>
+                    ID: ${categoryDetails.category_id}
+                `;
+                categoriesContainer.appendChild(categoryDiv);
+            }
+        };
+
+        categoriesSocket.onerror = function(error) {
+            console.error('WebSocket ошибка для категорий:', error);
+        };
+
+        categoriesSocket.onclose = function() {
+            console.log('WebSocket закрыт для категорий');
+        };
+
+        // WebSocket для продуктов
+        const productsSocket = new WebSocket('ws://' + window.location.host + '/ws/products/');
+
+        productsSocket.onopen = function() {
+            console.log('WebSocket подключен для продуктов');
+        };
+
+        productsSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение о продукте:', data);
+
+            if (data.product_details) {
+                const productDetails = data.product_details;
+
+                const productDiv = document.createElement('div');
+                productDiv.classList.add('product');
+                
+                productDiv.innerHTML = `
+                    <strong>Продукт: ${productDetails.name}</strong><br>
+                    ID: ${productDetails.product_id}<br>
+                    Цена: ${productDetails.price} руб.<br>
+                    Остаток: ${productDetails.stock}<br>
+                    Категория: ${productDetails.category}
+                `;
+                productsContainer.appendChild(productDiv);
+            }
+        };
+
+        productsSocket.onerror = function(error) {
+            console.error('WebSocket ошибка для продуктов:', error);
+        };
+
+        productsSocket.onclose = function() {
+            console.log('WebSocket закрыт для продуктов');
+        };
+
+        // WebSocket для отзывов
+        const reviewsSocket = new WebSocket('ws://' + window.location.host + '/ws/reviews/');
+
+        reviewsSocket.onopen = function() {
+            console.log('WebSocket подключен для отзывов');
+        };
+
+        reviewsSocket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('Получено сообщение о отзыве:', data);
+
+            if (data.review_details) {
+                const reviewDetails = data.review_details;
+
+                const reviewDiv = document.createElement('div');
+                reviewDiv.classList.add('review');
+                
+                reviewDiv.innerHTML = `
+                    <strong>Отзыв о продукте: ${reviewDetails.product}</strong><br>
+                    Рейтинг: ${reviewDetails.rating}<br>
+                    Комментарий: ${reviewDetails.comment}<br>
+                `;
+                reviewsContainer.appendChild(reviewDiv);
+            }
+        };
+
+        reviewsSocket.onerror = function(error) {
+            console.error('WebSocket ошибка для отзывов:', error);
+        };
+
+        reviewsSocket.onclose = function() {
+            console.log('WebSocket закрыт для отзывов');
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+version: "3.8"
+
+volumes:
+  pg_data1:
+  static_data:
+  media_data:
+  cloudflare_certs:  # Новый том для сертификатов CloudFlare
+
+services:
+  db1:
+    image: postgres:13
+    env_file: .env
+    volumes:
+      - pg_data1:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    expose:
+      - "5432"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust  
+    command: ["postgres", "-c", "listen_addresses=*"]
+    restart: always
+
+  redis:
+    image: redis:7
+    restart: always
+    networks:
+      - backend_network
+    expose:
+      - "6379"
+
+  backend:
+    build: ./api
+    env_file: .env
+    volumes:
+      - static_data:/staticfiles
+      - media_data:/media
+    depends_on:
+      - db1
+      - redis
+    environment:
+      - DEBUG=False
+      - SECURE_SSL_REDIRECT=True
+      - SESSION_COOKIE_SECURE=True
+      - CSRF_COOKIE_SECURE=True  
+    networks:
+      - backend_network
+    command: >
+      bash -c "
+        sleep 10 &&
+        python manage.py makemigrations &&
+        python manage.py migrate && 
+        python manage.py collectstatic --noinput &&
+        gunicorn api.wsgi:application --bind 0.0.0.0:8000
+      "
+    restart: always
+
+  celery_worker:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+    environment:
+      - SERVICE_NAME=celery_worker
+    networks:
+      - backend_network  
+    command: celery -A api worker --loglevel=info
+    restart: always
+
+  celery_beat:
+    build: ./api
+    volumes:
+      - ./api:/app
+    env_file: .env
+    depends_on:
+      - backend
+      - redis
+      - celery_worker
+    environment:
+      - SERVICE_NAME=celery_beat
+    networks:
+      - backend_network
+    command: celery -A api beat --loglevel=info
+    restart: always
+      
+  nginx:
+    build: ./api/nginx
+    volumes:
+      - static_data:/staticfiles 
+      - cloudflare_certs:/etc/cloudflare
+      - media_data:/media
+      - ./api/cloudflare_certs:/etc/cloudflare
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:  
+      - backend_network
+    depends_on:
+      - backend
+    restart: always
+
+networks:
+  backend_network:
+    driver: bridge
