@@ -78,6 +78,7 @@ def test_aichat(get_token_for_user):
     response = client.post("/chat/", data, format="json")
     assert response.status_code == status.HTTP_200_OK
     assert "response" in response.json()
+    assert isinstance(response.json()["response"], str)
     
     # Тест с запросом о категории
     data = {"message": "Выведи название категории c id 1"}

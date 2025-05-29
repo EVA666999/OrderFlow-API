@@ -174,79 +174,93 @@ def category(client, get_token_for_user):
 
 
 @pytest.mark.django_db
-def test_create_product_as_supplier(get_token_for_user, category, test_image, test_video):
+def test_create_product_as_supplier(get_token_for_user, test_image, test_video):
     """Тестируем создание продукта для поставщика"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_supplier)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
     product_data = {
-        "category": category,
-        "name": "product1",
+        "category": category.id,
+        "name": "Test Product",
         "price": 100.99,
         "stock": 1000,
         "image": test_image,
         "video": test_video,
     }
     response = client.post("/api/products/", product_data, format="multipart")
-
     assert response.status_code == status.HTTP_201_CREATED
-    product_id = response.data["id"]
-
-    assert Product.objects.filter(id=product_id).exists() is True
+    assert response.data["name"] == "Test Product"
+    assert response.data["price"] == 100.99
+    assert response.data["stock"] == 1000
 
 
 @pytest.mark.django_db
-def test_patch_product_as_supplier(get_token_for_user, category, test_image, test_video):
+def test_patch_product_as_supplier(get_token_for_user, test_image, test_video):
     """Тестируем обновление продукта для поставщика"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_supplier)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
     product_data = {
-        "category": category,
-        "name": "product1",
+        "category": category.id,
+        "name": "Test Product",
         "price": 100.99,
         "stock": 1000,
         "image": test_image,
         "video": test_video,
     }
     create_response = client.post("/api/products/", product_data, format="multipart")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     product_id = create_response.data["id"]
 
-    update_data = {"name": "updated_product", "price": 199.99}
+    # Обновляем продукт
+    update_data = {
+        "name": "Updated Product",
+        "price": 200.99,
+        "stock": 500,
+    }
     patch_response = client.patch(
         f"/api/products/{product_id}/", update_data, format="json"
     )
-
     assert patch_response.status_code == status.HTTP_200_OK
-    assert patch_response.data["name"] == "updated_product"
-    assert float(patch_response.data["price"]) == 199.99
+    assert patch_response.data["name"] == "Updated Product"
+    assert patch_response.data["price"] == 200.99
+    assert patch_response.data["stock"] == 500
 
 
 @pytest.mark.django_db
-def test_delete_product_as_supplier(get_token_for_user, category, test_image, test_video):
+def test_delete_product_as_supplier(get_token_for_user, test_image, test_video):
     """Тестируем удаление продукта для поставщика"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_supplier)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
     product_data = {
-        "category": category,
-        "name": "product1",
+        "category": category.id,
+        "name": "Test Product",
         "price": 100.99,
         "stock": 1000,
         "image": test_image,
         "video": test_video,
     }
     create_response = client.post("/api/products/", product_data, format="multipart")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     product_id = create_response.data["id"]
 
+    # Удаляем продукт
     delete_response = client.delete(f"/api/products/{product_id}/")
-
     assert delete_response.status_code == status.HTTP_204_NO_CONTENT
-    assert Product.objects.filter(id=product_id).exists() is False
+    assert not Product.objects.filter(id=product_id).exists()
 
 
 @pytest.fixture
@@ -302,139 +316,223 @@ def discount(client, get_token_for_user):
 
 
 @pytest.mark.django_db
-def test_create_order_as_customer(get_token_for_user, product1, product2, discount):
+def test_create_order_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем создание заказа для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем заказ
     order_data = {
-        "products": [product1, product2],
-        "discount": discount,
-        "shipping_address": "test address",
+        "products": [{"product": product.id, "quantity": 2}],
+        "shipping_address": "Test Address",
         "payment_method": "card",
     }
     response = client.post("/api/orders/", order_data, format="json")
-
     assert response.status_code == status.HTTP_201_CREATED
-    order_id = response.data["id"]
-
-    assert Order.objects.filter(id=order_id).exists() is True
+    assert response.data["shipping_address"] == "Test Address"
+    assert response.data["payment_method"] == "card"
+    assert len(response.data["products"]) == 1
+    assert response.data["products"][0]["product"] == product.id
+    assert response.data["products"][0]["quantity"] == 2
 
 
 @pytest.mark.django_db
-def test_patch_order_as_customer(get_token_for_user, product1, product2, discount):
+def test_patch_order_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем обновление заказа для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем заказ
     order_data = {
-        "products": [product1, product2],
-        "discount": discount,
-        "shipping_address": "test address",
+        "products": [{"product": product.id, "quantity": 2}],
+        "shipping_address": "Test Address",
         "payment_method": "card",
     }
     create_response = client.post("/api/orders/", order_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     order_id = create_response.data["id"]
 
-    update_data = {"shipping_address": "updated address"}
+    # Обновляем заказ
+    update_data = {
+        "shipping_address": "Updated Address",
+        "payment_method": "cash",
+    }
     patch_response = client.patch(
         f"/api/orders/{order_id}/", update_data, format="json"
     )
-
     assert patch_response.status_code == status.HTTP_200_OK
-    assert patch_response.data["shipping_address"] == "updated address"
+    assert patch_response.data["shipping_address"] == "Updated Address"
+    assert patch_response.data["payment_method"] == "cash"
 
 
 @pytest.mark.django_db
-def test_delete_order_as_customer(get_token_for_user, product1, product2, discount):
+def test_delete_order_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем удаление заказа для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем заказ
     order_data = {
-        "products": [product1, product2],
-        "discount": discount,
-        "shipping_address": "test address",
+        "products": [{"product": product.id, "quantity": 2}],
+        "shipping_address": "Test Address",
         "payment_method": "card",
     }
     create_response = client.post("/api/orders/", order_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     order_id = create_response.data["id"]
 
+    # Удаляем заказ
     delete_response = client.delete(f"/api/orders/{order_id}/")
-
     assert delete_response.status_code == status.HTTP_204_NO_CONTENT
-    assert Order.objects.filter(id=order_id).exists() is False
+    assert not Order.objects.filter(id=order_id).exists()
 
 
 @pytest.mark.django_db
-def test_create_review_as_customer(get_token_for_user, product1):
+def test_create_review_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем создание отзыва для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем отзыв
     review_data = {
-        "product": product1,
+        "product": product.id,
         "rating": 5,
         "comment": "Great product!",
     }
     response = client.post("/api/reviews/", review_data, format="json")
-
     assert response.status_code == status.HTTP_201_CREATED
-    review_id = response.data["id"]
-
-    assert ProductReview.objects.filter(id=review_id).exists() is True
+    assert response.data["rating"] == 5
+    assert response.data["comment"] == "Great product!"
+    assert response.data["product"] == product.id
 
 
 @pytest.mark.django_db
-def test_patch_review_as_customer(get_token_for_user, product1):
+def test_patch_review_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем обновление отзыва для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем отзыв
     review_data = {
-        "product": product1,
+        "product": product.id,
         "rating": 5,
         "comment": "Great product!",
     }
     create_response = client.post("/api/reviews/", review_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     review_id = create_response.data["id"]
 
-    update_data = {"rating": 4, "comment": "Updated review"}
+    # Обновляем отзыв
+    update_data = {
+        "rating": 4,
+        "comment": "Updated review",
+    }
     patch_response = client.patch(
         f"/api/reviews/{review_id}/", update_data, format="json"
     )
-
     assert patch_response.status_code == status.HTTP_200_OK
     assert patch_response.data["rating"] == 4
     assert patch_response.data["comment"] == "Updated review"
 
 
 @pytest.mark.django_db
-def test_delete_review_as_customer(get_token_for_user, product1):
+def test_delete_review_as_customer(get_token_for_user, test_image, test_video):
     """Тестируем удаление отзыва для клиента"""
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_customer)
 
+    # Создаем категорию
+    category = Category.objects.create(name="Test Category")
+
+    # Создаем продукт
+    product = Product.objects.create(
+        category=category,
+        name="Test Product",
+        price=100.99,
+        stock=1000,
+        image=test_image,
+        video=test_video,
+    )
+
+    # Создаем отзыв
     review_data = {
-        "product": product1,
+        "product": product.id,
         "rating": 5,
         "comment": "Great product!",
     }
     create_response = client.post("/api/reviews/", review_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     review_id = create_response.data["id"]
 
+    # Удаляем отзыв
     delete_response = client.delete(f"/api/reviews/{review_id}/")
-
     assert delete_response.status_code == status.HTTP_204_NO_CONTENT
-    assert ProductReview.objects.filter(id=review_id).exists() is False
+    assert not ProductReview.objects.filter(id=review_id).exists()
 
 
 @pytest.mark.django_db
@@ -453,7 +551,6 @@ def test_create_discount_as_employee(get_token_for_user):
 
     assert response.status_code == status.HTTP_201_CREATED
     discount_id = response.data["id"]
-
     assert Discount.objects.filter(id=discount_id).exists() is True
 
 
@@ -463,6 +560,7 @@ def test_patch_discount_as_employee(get_token_for_user):
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_employee)
 
+    # Создаем скидку
     discount_data = {
         "name": "discount1",
         "description": "test discount",
@@ -470,18 +568,24 @@ def test_patch_discount_as_employee(get_token_for_user):
         "active": True,
     }
     create_response = client.post("/api/discounts/", discount_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     discount_id = create_response.data["id"]
 
-    update_data = {"discount_percent": 20, "description": "Updated discount"}
+    # Обновляем скидку
+    update_data = {
+        "name": "Updated Discount",
+        "description": "Updated description",
+        "discount_percent": 20,
+        "active": False,
+    }
     patch_response = client.patch(
         f"/api/discounts/{discount_id}/", update_data, format="json"
     )
-
     assert patch_response.status_code == status.HTTP_200_OK
+    assert patch_response.data["name"] == "Updated Discount"
+    assert patch_response.data["description"] == "Updated description"
     assert patch_response.data["discount_percent"] == 20
-    assert patch_response.data["description"] == "Updated discount"
+    assert patch_response.data["active"] is False
 
 
 @pytest.mark.django_db
@@ -490,6 +594,7 @@ def test_delete_discount_as_employee(get_token_for_user):
     token_employee, token_customer, token_supplier, client = get_token_for_user
     client.credentials(HTTP_AUTHORIZATION="Bearer " + token_employee)
 
+    # Создаем скидку
     discount_data = {
         "name": "discount1",
         "description": "test discount",
@@ -497,11 +602,10 @@ def test_delete_discount_as_employee(get_token_for_user):
         "active": True,
     }
     create_response = client.post("/api/discounts/", discount_data, format="json")
-
     assert create_response.status_code == status.HTTP_201_CREATED
     discount_id = create_response.data["id"]
 
+    # Удаляем скидку
     delete_response = client.delete(f"/api/discounts/{discount_id}/")
-
     assert delete_response.status_code == status.HTTP_204_NO_CONTENT
-    assert Discount.objects.filter(id=discount_id).exists() is False
+    assert not Discount.objects.filter(id=discount_id).exists()

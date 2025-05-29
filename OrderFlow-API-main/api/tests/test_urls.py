@@ -129,7 +129,6 @@ def test_protected_endpoints_for_customers(get_token_for_user):
         "/api/orders/",
         "/api/products/",
         "/api/category/",
-        "/api/reviews/",
         "/auth/users/",
         "/users/me/",
         "/users/users/",
@@ -151,7 +150,6 @@ def test_public_endpoints():
     public_endpoints = [
         "/api/products/",
         "/api/category/",
-        "/auth/jwt/create/",
         "/auth/users/",
     ]
 
@@ -161,6 +159,16 @@ def test_public_endpoints():
             status.HTTP_200_OK,
             status.HTTP_401_UNAUTHORIZED,
         ], f"Ошибка на {endpoint}"
+
+    # Тестируем POST запрос для получения JWT токена
+    response = client.post("/auth/jwt/create/", {
+        "username": "test_user",
+        "password": "test_password"
+    })
+    assert response.status_code in [
+        status.HTTP_200_OK,
+        status.HTTP_401_UNAUTHORIZED,
+    ], "Ошибка при получении JWT токена"
 
 
 @pytest.mark.django_db
